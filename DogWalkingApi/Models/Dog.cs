@@ -16,4 +16,6 @@ public class Dog
 
     // Foreign Key
     public int OwnerId { get; set; }
+
+    public ICollection<Walk> Walks { get; set; } = [];
 }

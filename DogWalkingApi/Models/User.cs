@@ -6,4 +6,8 @@ public class User
     public string Name { get; set; }
     public string Email { get; set; }
     public string PasswordHash { get; set; }
+
+    // Navigation
+    public ICollection<Dog> Dogs { get; set; } = [];
+    public ICollection<Walk> Walks { get; set; } = [];
 }

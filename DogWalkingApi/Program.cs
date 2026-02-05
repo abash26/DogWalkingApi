@@ -18,6 +18,8 @@ builder.Services.AddScoped<IDogRepository, DogRepository>();
 builder.Services.AddScoped<IDogService, DogService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IWalkRepository, WalkRepository>();
+builder.Services.AddScoped<IWalkService, WalkService>();
 
 // Swagger services
 builder.Services.AddEndpointsApiExplorer();

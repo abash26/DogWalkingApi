@@ -3,11 +3,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DogWalkingApi.Data;
 
-public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
+public class ApplicationDbContext : DbContext
 {
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+       : base(options) { }
+
     public DbSet<Dog> Dogs { get; set; }
-    public DbSet<Walk> Walks { get; set; }
     public DbSet<User> Users { get; set; }
+    public DbSet<Walk> Walks { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -27,8 +30,24 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
 
         // Seed Walks
         modelBuilder.Entity<Walk>().HasData(
-            new Walk { Id = 1, WalkDate = DateTime.UtcNow.Date, Duration = new TimeSpan(1, 0, 0), Status = "Scheduled", DogId = 1, WalkerId = 2 },
-            new Walk { Id = 2, WalkDate = DateTime.UtcNow.Date.AddDays(1), Duration = new TimeSpan(0, 30, 0), Status = "Scheduled", DogId = 2, WalkerId = 1 }
+            new Walk
+            {
+                Id = 1,
+                StartTime = new DateTime(2026, 2, 5, 10, 0, 0),
+                Duration = TimeSpan.FromHours(1), // okay for EF Core 6+, else use ticks
+                Status = WalkStatus.Scheduled,
+                DogId = 1,
+                WalkerId = 2
+            },
+            new Walk
+            {
+                Id = 2,
+                StartTime = new DateTime(2026, 2, 6, 14, 0, 0),
+                Duration = TimeSpan.FromMinutes(30),
+                Status = WalkStatus.Scheduled,
+                DogId = 2,
+                WalkerId = 1
+            }
         );
     }
 }
