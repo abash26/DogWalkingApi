@@ -8,7 +8,7 @@ public class WalkService(IWalkRepository walkRepository) : IWalkService
 {
     public readonly IWalkRepository _walkRepository = walkRepository;
 
-    private WalkDto MapToDto(Walk w) => new WalkDto
+    private WalkDto MapToDto(Walk w) => new()
     {
         Id = w.Id,
         StartTime = w.StartTime,
