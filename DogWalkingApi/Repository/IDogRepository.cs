@@ -1,14 +1,12 @@
-﻿using DogWalkingApi.DTOs;
-using DogWalkingApi.Models;
+﻿using DogWalkingApi.Models;
 
 namespace DogWalkingApi.Repository;
-
 public interface IDogRepository
 {
-    Task<List<Dog>> GetDogs();
-    Task<Dog?> GetDogById(int id);
-
-    Task<Dog> AddDog(CreateDogDTO dog);
-    Task<Dog?> UpdateDog(Dog dog);
+    Task<Dog> AddDog(Dog dog);
     Task<bool> DeleteDog(Dog dog);
+    Task<Dog?> GetDogById(int id);
+    Task<List<Dog>> GetDogs();
+    Task<List<Dog>> GetDogsByOwnerId(int ownerId);
+    Task<Dog?> UpdateDog(Dog dog);
 }

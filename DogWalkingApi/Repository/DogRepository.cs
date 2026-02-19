@@ -1,5 +1,4 @@
 ﻿using DogWalkingApi.Data;
-using DogWalkingApi.DTOs;
 using DogWalkingApi.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,44 +6,44 @@ namespace DogWalkingApi.Repository;
 
 public class DogRepository : IDogRepository
 {
-    public readonly ApplicationDbContext _context;
+    private readonly ApplicationDbContext _context;
 
     public DogRepository(ApplicationDbContext context)
     {
         _context = context;
     }
 
+    // Get all dogs (optionally filtered by owner)
     public async Task<List<Dog>> GetDogs()
     {
         return await _context.Dogs.ToListAsync();
     }
 
+    // Get dogs for a specific owner
+    public async Task<List<Dog>> GetDogsByOwnerId(int ownerId)
+    {
+        return await _context.Dogs
+            .Where(d => d.OwnerId == ownerId)
+            .ToListAsync();
+    }
+
+    // Get single dog by ID
     public async Task<Dog?> GetDogById(int id)
     {
         return await _context.Dogs.FirstOrDefaultAsync(d => d.Id == id);
     }
 
-    public async Task<Dog> AddDog(CreateDogDTO dog)
+    // Add dog (ownerId must come from server, not client)
+    public async Task<Dog> AddDog(Dog dog)
     {
-        var newDog = new Dog
-        {
-            Name = dog.Name,
-            Breed = dog.Breed,
-            Age = dog.Age,
-            Size = dog.Size,
-            SpecialNeeds = dog.SpecialNeeds,
-            OwnerId = dog.OwnerId
-        };
-
-        _context.Dogs.Add(newDog);
+        _context.Dogs.Add(dog);
         await _context.SaveChangesAsync();
-        return newDog;
+        return dog;
     }
 
     public async Task<Dog?> UpdateDog(Dog dog)
     {
         var existingDog = await GetDogById(dog.Id);
-
         if (existingDog == null) return null;
 
         existingDog.Name = dog.Name;

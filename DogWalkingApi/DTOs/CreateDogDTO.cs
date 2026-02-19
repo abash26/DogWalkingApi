@@ -16,7 +16,4 @@ public class CreateDogDTO
     public string Size { get; set; }
 
     public string? SpecialNeeds { get; set; }
-
-    [Required]
-    public int OwnerId { get; set; }
 }

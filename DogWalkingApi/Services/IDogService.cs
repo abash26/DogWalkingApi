@@ -2,12 +2,11 @@
 using DogWalkingApi.Models;
 
 namespace DogWalkingApi.Services;
-
 public interface IDogService
 {
-    Task<List<Dog>> GetDogsAsync();
+    Task<Dog> AddDogAsync(CreateDogDTO dto, int ownerId);
+    Task<bool> DeleteDogAsync(int id, int ownerId);
     Task<Dog?> GetDogByIdAsync(int id);
-    Task<Dog> AddDogAsync(CreateDogDTO dog);
-    Task<Dog?> UpdateDogAsync(int id, UpdateDogDTO dogDto);
-    Task<bool> DeleteDogAsync(int id);
+    Task<List<Dog>> GetDogsAsync(int ownerId);
+    Task<Dog?> UpdateDogAsync(int id, UpdateDogDTO dto, int ownerId);
 }

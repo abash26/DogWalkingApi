@@ -12,4 +12,5 @@ public class RegisterDTO
 
     [Required]
     public string Name { get; set; }
+    public string Role { get; set; } = "owner";
 }
