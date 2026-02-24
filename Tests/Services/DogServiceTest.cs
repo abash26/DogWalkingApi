@@ -6,6 +6,7 @@ using FluentAssertions;
 using Moq;
 
 namespace Tests.Services;
+
 public class DogServiceTest
 {
     private readonly Mock<IDogRepository> _dogRepositoryMock;
@@ -18,31 +19,30 @@ public class DogServiceTest
     }
 
     [Fact]
-    public async Task GetDogsAsync_ReturnAllDogs()
+    public async Task GetDogsAsync_ShouldReturnDogsForOwner()
     {
         // Arrange
+        var ownerId = 1;
         var dogs = new List<Dog>
         {
-            new() { Id = 1, Name = "Buddy", Breed = "Golden Retriever", Age = 3, Size = "Large", OwnerId = 1 },
-            new() { Id = 2, Name = "Max", Breed = "Labrador Retriever", Age = 5, Size = "Large", OwnerId = 2 }
+            new() { Id = 1, Name = "Buddy", Breed = "Golden Retriever", Age = 3, Size = "Large", OwnerId = ownerId },
+            new() { Id = 2, Name = "Max", Breed = "Labrador", Age = 5, Size = "Large", OwnerId = ownerId }
         };
-        _dogRepositoryMock.Setup(repo => repo.GetDogs()).ReturnsAsync(dogs);
+        _dogRepositoryMock.Setup(r => r.GetDogsByOwnerId(ownerId)).ReturnsAsync(dogs);
 
         // Act
-        var result = await _service.GetDogsAsync();
+        var result = await _service.GetDogsAsync(ownerId);
 
         // Assert
-        Assert.Equal(2, result.Count);
-        Assert.Equal("Buddy", result[0].Name);
-        Assert.Equal("Max", result[1].Name);
+        result.Should().BeEquivalentTo(dogs);
     }
 
     [Fact]
-    public async Task GetDogByIdAsync_ReturnDog()
+    public async Task GetDogByIdAsync_ShouldReturnDog()
     {
         // Arrange
         var dog = new Dog { Id = 1, Name = "Buddy", Breed = "Golden Retriever", Age = 3, Size = "Large", OwnerId = 1 };
-        _dogRepositoryMock.Setup(repo => repo.GetDogById(1)).ReturnsAsync(dog);
+        _dogRepositoryMock.Setup(r => r.GetDogById(1)).ReturnsAsync(dog);
 
         // Act
         var result = await _service.GetDogByIdAsync(1);
@@ -52,67 +52,142 @@ public class DogServiceTest
     }
 
     [Fact]
-    public async Task AddDogAsync_AddAndReturnDog()
+    public async Task AddDogAsync_ShouldAddAndReturnDog()
     {
         // Arrange
-        var createDogDto = new CreateDogDTO { Name = "Buddy", Breed = "Golden Retriever", Age = 3, Size = "Large", OwnerId = 1 };
-        var addedDog = new Dog { Id = 1, Name = "Buddy", Breed = "Golden Retriever", Age = 3, Size = "Large", OwnerId = 1 };
-        _dogRepositoryMock.Setup(repo => repo.AddDog(createDogDto)).ReturnsAsync(addedDog);
+        var ownerId = 1;
+        var createDto = new CreateDogDTO
+        {
+            Name = "Buddy",
+            Breed = "Golden Retriever",
+            Age = 3,
+            Size = "Large",
+            SpecialNeeds = "None"
+        };
+
+        var addedDog = new Dog
+        {
+            Id = 1,
+            Name = "Buddy",
+            Breed = "Golden Retriever",
+            Age = 3,
+            Size = "Large",
+            SpecialNeeds = "None",
+            OwnerId = ownerId
+        };
+
+        _dogRepositoryMock
+            .Setup(r => r.AddDog(It.Is<Dog>(d =>
+                d.Name == createDto.Name &&
+                d.Breed == createDto.Breed &&
+                d.Age == createDto.Age &&
+                d.Size == createDto.Size &&
+                d.SpecialNeeds == createDto.SpecialNeeds &&
+                d.OwnerId == ownerId)))
+            .ReturnsAsync(addedDog);
 
         // Act
-        var result = await _service.AddDogAsync(createDogDto);
+        var result = await _service.AddDogAsync(createDto, ownerId);
 
         // Assert
         result.Should().BeEquivalentTo(addedDog);
     }
 
     [Fact]
-    public async Task UpdateDogAsync_UpdatesOnlyProvidedFields()
+    public async Task UpdateDogAsync_ShouldUpdateOnlyProvidedFields()
     {
-        var dog = new Dog { Id = 1, Name = "Buddy", Breed = "Golden Retriever", Age = 3, Size = "Large", OwnerId = 1 };
+        // Arrange
+        var ownerId = 1;
+        var dog = new Dog { Id = 1, Name = "Buddy", Breed = "Golden Retriever", Age = 3, Size = "Large", OwnerId = ownerId };
         var updateDto = new UpdateDogDTO { Name = "Buddy Updated", Age = 4 };
-        _dogRepositoryMock.Setup(repo => repo.GetDogById(1)).ReturnsAsync(dog);
+
+        _dogRepositoryMock.Setup(r => r.GetDogById(1)).ReturnsAsync(dog);
         _dogRepositoryMock.Setup(r => r.UpdateDog(It.IsAny<Dog>())).ReturnsAsync((Dog d) => d);
 
         // Act
-        var result = await _service.UpdateDogAsync(1, updateDto);
+        var result = await _service.UpdateDogAsync(1, updateDto, ownerId);
 
         // Assert
         result.Should().NotBeNull();
         result.Name.Should().Be("Buddy Updated");
         result.Age.Should().Be(4);
         result.Breed.Should().Be("Golden Retriever");
+        result.Size.Should().Be("Large");
     }
 
     [Fact]
-    public async Task DeleteDogAsync_ReturnsFalseIfDogNotFound()
+    public async Task UpdateDogAsync_ShouldReturnNull_IfDogNotFound()
     {
         // Arrange
-        _dogRepositoryMock.Setup(repo => repo.GetDogById(1)).ReturnsAsync((Dog?)null);
+        var ownerId = 1;
+        _dogRepositoryMock.Setup(r => r.GetDogById(1)).ReturnsAsync((Dog?)null);
+        var updateDto = new UpdateDogDTO { Name = "Updated" };
 
         // Act
-        var result = await _service.DeleteDogAsync(1);
+        var result = await _service.UpdateDogAsync(1, updateDto, ownerId);
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task UpdateDogAsync_ShouldReturnNull_IfOwnerMismatch()
+    {
+        // Arrange
+        var dog = new Dog { Id = 1, Name = "Buddy", OwnerId = 2 }; // different owner
+        var ownerId = 1;
+        _dogRepositoryMock.Setup(r => r.GetDogById(1)).ReturnsAsync(dog);
+        var updateDto = new UpdateDogDTO { Name = "Updated" };
+
+        // Act
+        var result = await _service.UpdateDogAsync(1, updateDto, ownerId);
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task DeleteDogAsync_ShouldReturnTrue()
+    {
+        // Arrange
+        var ownerId = 1;
+        var dog = new Dog { Id = 1, Name = "Buddy", OwnerId = ownerId };
+        _dogRepositoryMock.Setup(r => r.GetDogById(1)).ReturnsAsync(dog);
+        _dogRepositoryMock.Setup(r => r.DeleteDog(dog)).ReturnsAsync(true);
+
+        // Act
+        var result = await _service.DeleteDogAsync(1, ownerId);
+
+        // Assert
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task DeleteDogAsync_ShouldReturnFalse_IfDogNotFound()
+    {
+        // Arrange
+        var ownerId = 1;
+        _dogRepositoryMock.Setup(r => r.GetDogById(1)).ReturnsAsync((Dog?)null);
+
+        // Act
+        var result = await _service.DeleteDogAsync(1, ownerId);
 
         // Assert
         result.Should().BeFalse();
     }
 
     [Fact]
-    public async Task DeleteDogAsync_ReturnsTrue()
+    public async Task DeleteDogAsync_ShouldReturnFalse_IfOwnerMismatch()
     {
         // Arrange
-        var dog = new Dog { Id = 1, Name = "Buddy" };
-
-        _dogRepositoryMock.Setup(r => r.GetDogById(1))
-                 .ReturnsAsync(dog);
-
-        _dogRepositoryMock.Setup(r => r.DeleteDog(dog))
-                 .ReturnsAsync(true);
+        var ownerId = 1;
+        var dog = new Dog { Id = 1, Name = "Buddy", OwnerId = 2 }; // different owner
+        _dogRepositoryMock.Setup(r => r.GetDogById(1)).ReturnsAsync(dog);
 
         // Act
-        var result = await _service.DeleteDogAsync(1);
+        var result = await _service.DeleteDogAsync(1, ownerId);
 
         // Assert
-        result.Should().BeTrue();
+        result.Should().BeFalse();
     }
 }

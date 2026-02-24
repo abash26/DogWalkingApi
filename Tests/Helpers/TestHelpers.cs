@@ -4,12 +4,18 @@ using DogWalkingApi.Models;
 namespace Tests.Helpers;
 public class TestHelpers
 {
-    public static async Task<User> AddTestUser(ApplicationDbContext context, string? email = null, string? name = null)
+    public static async Task<User> AddTestUser(
+        ApplicationDbContext context,
+        UserRole role = UserRole.Owner,
+        string? email = null,
+        string? name = null
+    )
     {
         var user = new User
         {
             Email = email ?? $"{Guid.NewGuid()}@test.com",
             Name = name ?? "Walker User",
+            Role = role,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("password123")
         };
 
@@ -18,7 +24,11 @@ public class TestHelpers
         return user;
     }
 
-    public static async Task<Dog> AddTestDog(ApplicationDbContext context, string name = "Buddy", int ownerId = 1)
+    public static async Task<Dog> AddTestDog(
+        ApplicationDbContext context,
+        string name = "Buddy",
+        int ownerId = 1
+    )
     {
         var dog = new Dog
         {

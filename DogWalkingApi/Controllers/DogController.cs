@@ -51,6 +51,8 @@ public class DogController : ControllerBase
     [Authorize(Roles = "Owner")]
     public async Task<IActionResult> CreateDog([FromBody] CreateDogDTO dogDto)
     {
+        if (dogDto == null) return BadRequest();
+
         var userId = GetUserId();
         if (userId == null) return Unauthorized();
 
@@ -62,11 +64,13 @@ public class DogController : ControllerBase
     [Authorize(Roles = "Owner")]
     public async Task<IActionResult> UpdateDog(int id, [FromBody] UpdateDogDTO dogDto)
     {
+        if (dogDto == null) return BadRequest();
+
         var userId = GetUserId();
         if (userId == null) return Unauthorized();
 
         var updatedDog = await _dogService.UpdateDogAsync(id, dogDto, userId.Value);
-        if (updatedDog == null) return Forbid();
+        if (updatedDog == null) return NotFound();
 
         return Ok(updatedDog);
     }
@@ -79,7 +83,7 @@ public class DogController : ControllerBase
         if (userId == null) return Unauthorized();
 
         var result = await _dogService.DeleteDogAsync(id, userId.Value);
-        if (!result) return Forbid();
+        if (!result) return NotFound();
 
         return NoContent();
     }

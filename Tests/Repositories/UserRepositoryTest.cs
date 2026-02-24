@@ -1,5 +1,6 @@
 ﻿using DogWalkingApi.Data;
 using DogWalkingApi.DTOs;
+using DogWalkingApi.Models;
 using DogWalkingApi.Repository;
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
@@ -38,7 +39,7 @@ public class UserRepositoryTest : IDisposable
     [Fact]
     public async Task GetUserById_ShouldReturnUser()
     {
-        var user = await TestHelpers.AddTestUser(_context, "test@test.com", "Test User");
+        var user = await TestHelpers.AddTestUser(_context, UserRole.Owner, "test@test.com", "Test User");
 
         var result = await _repository.GetUserById(user.Id);
 
@@ -58,7 +59,7 @@ public class UserRepositoryTest : IDisposable
     [Fact]
     public async Task GetUserByEmail_ShouldReturnUser()
     {
-        await TestHelpers.AddTestUser(_context, "test@test.com", "Test User");
+        await TestHelpers.AddTestUser(_context, UserRole.Owner, "test@test.com", "Test User");
 
         var result = await _repository.GetUserByEmail("test@test.com");
 

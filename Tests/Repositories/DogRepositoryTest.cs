@@ -91,18 +91,27 @@ public class DogRepositoryTests : IDisposable
     public async Task AddDog_ShouldReturnNewDog()
     {
         // Arrange
+        var userId = 1;
         var newDog = new CreateDogDTO
         {
             Name = "Jerry",
             Breed = "Labrador",
             Age = 3,
             Size = "Medium",
-            SpecialNeeds = "None",
-            OwnerId = 1
+            SpecialNeeds = "None"
+        };
+        var dogEntity = new Dog
+        {
+            Name = newDog.Name,
+            Breed = newDog.Breed,
+            Age = newDog.Age,
+            Size = newDog.Size,
+            SpecialNeeds = newDog.SpecialNeeds,
+            OwnerId = userId
         };
 
         // Act
-        var dog = await _repository.AddDog(newDog);
+        var dog = await _repository.AddDog(dogEntity);
 
         // Assert
         dog.Should().NotBeNull();
