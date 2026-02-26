@@ -25,6 +25,42 @@ public class WalkService(IWalkRepository walkRepository) : IWalkService
         return walk.Select(MapToDto).ToList();
     }
 
+    public async Task<List<WalkDto>> GetPendingWalksAsync()
+    {
+        var walk = await _walkRepository.GetPendingWalksAsync();
+        return walk.Select(MapToDto).ToList();
+    }
+
+    public async Task AcceptWalkAsync(int walkId, int walkerId)
+    {
+        var walk = await _walkRepository.GetWalkByIdAsync(walkId)
+                   ?? throw new Exception("Walk not found");
+
+        if (walk.Status != WalkStatus.Pending)
+            throw new Exception("Walk is not available for acceptance");
+
+        walk.WalkerId = walkerId;
+        walk.Status = WalkStatus.Scheduled;
+
+        await _walkRepository.UpdateAsync(walk);
+    }
+
+    public async Task StartWalkAsync(int walkId, int walkerId)
+    {
+        var walk = await _walkRepository.GetWalkByIdAsync(walkId)
+                   ?? throw new Exception("Walk not found");
+
+        if (walk.WalkerId != walkerId)
+            throw new Exception("You are not assigned to this walk");
+
+        if (walk.Status != WalkStatus.Scheduled)
+            throw new Exception("Walk is not ready to start");
+
+        walk.Status = WalkStatus.InProgress;
+
+        await _walkRepository.UpdateAsync(walk);
+    }
+
     public async Task<WalkDto?> GetWalkByIdAsync(int id)
     {
         var walk = await _walkRepository.GetWalkByIdAsync(id);
@@ -44,7 +80,6 @@ public class WalkService(IWalkRepository walkRepository) : IWalkService
         return walk.Select(MapToDto).ToList();
     }
 
-    // Schedule a walk
     public async Task<WalkDto> ScheduleWalkAsync(Walk walk)
     {
         walk.Status = WalkStatus.Scheduled;
@@ -56,20 +91,48 @@ public class WalkService(IWalkRepository walkRepository) : IWalkService
         return MapToDto(fullWalk);
     }
 
-    // Complete a walk
-    public async Task CompleteWalkAsync(int walkId)
+    public async Task CompleteWalkAsync(int walkId, int walkerId)
     {
-        var walk = await _walkRepository.GetWalkByIdAsync(walkId) ?? throw new Exception("Walk not found");
+        var walk = await _walkRepository.GetWalkByIdAsync(walkId)
+                   ?? throw new Exception("Walk not found");
+
+        if (walk.WalkerId != walkerId)
+            throw new Exception("You are not assigned to this walk");
+
+        if (walk.Status != WalkStatus.InProgress)
+            throw new Exception("Walk is not in progress");
 
         walk.Status = WalkStatus.Completed;
 
         await _walkRepository.UpdateAsync(walk);
     }
 
-    // Cancel a walk
-    public async Task CancelWalkAsync(int walkId)
+    public async Task CancelWalkByWalkerAsync(int walkId, int walkerId)
     {
-        var walk = await _walkRepository.GetWalkByIdAsync(walkId) ?? throw new Exception("Walk not found");
+        var walk = await _walkRepository.GetWalkByIdAsync(walkId)
+                   ?? throw new Exception("Walk not found");
+
+        if (walk.WalkerId != walkerId)
+            throw new Exception("You are not assigned to this walk");
+
+        if (walk.Status == WalkStatus.Completed)
+            throw new Exception("Completed walk cannot be cancelled");
+
+        walk.Status = WalkStatus.Canceled;
+
+        await _walkRepository.UpdateAsync(walk);
+    }
+
+    public async Task CancelWalkByOwnerAsync(int walkId, int ownerId)
+    {
+        var walk = await _walkRepository.GetWalkByIdAsync(walkId)
+                   ?? throw new Exception("Walk not found");
+
+        if (walk.OwnerId != ownerId)
+            throw new Exception("You are not the owner of this walk");
+
+        if (walk.Status == WalkStatus.Completed)
+            throw new Exception("Completed walk cannot be cancelled");
 
         walk.Status = WalkStatus.Canceled;
 

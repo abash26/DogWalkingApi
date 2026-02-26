@@ -43,25 +43,39 @@ public class TestHelpers
         return dog;
     }
 
-    public static async Task<Walk> AddTestWalk(ApplicationDbContext context, int ownerId,
-                                               DateTime? startTime = null, TimeSpan? duration = null,
-                                               WalkStatus status = WalkStatus.Scheduled)
+    public static async Task<Walk> AddTestWalk(
+    ApplicationDbContext context,
+    int ownerId,
+    int walkerId,
+    DateTime? startTime = null,
+    TimeSpan? duration = null,
+    WalkStatus status = WalkStatus.Scheduled)
     {
         var dog = await AddTestDog(context, ownerId: ownerId);
-        var walker = await AddTestUser(context);
 
+        // Ensure walker exists
+        var walker = await context.Users.FindAsync(walkerId);
+        if (walker == null)
+        {
+            walker = await AddTestUser(context, role: UserRole.Walker);
+            walkerId = walker.Id; // override to the new ID
+        }
 
         var walk = new Walk
         {
             DogId = dog.Id,
-            WalkerId = walker.Id,
+            OwnerId = ownerId,
+            WalkerId = walkerId,
             StartTime = startTime ?? DateTime.UtcNow,
             Duration = duration ?? TimeSpan.FromHours(1),
-            Status = status
+            Status = status,
+            Dog = dog,
+            Walker = walker
         };
 
         context.Walks.Add(walk);
         await context.SaveChangesAsync();
+
         return walk;
     }
 }

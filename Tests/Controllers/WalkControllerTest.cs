@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Moq;
 
 namespace Tests.Controllers;
+
 public class WalkControllerTest
 {
     private readonly Mock<IWalkService> _walkServiceMock;
@@ -24,7 +25,6 @@ public class WalkControllerTest
     [Fact]
     public async Task GetWalks_ShouldReturnOkWithWalks()
     {
-        // Arrange
         var walks = new List<WalkDto>
         {
             new() { Id = 1, StartTime = DateTime.Now, Duration = TimeSpan.FromMinutes(30), Status = WalkStatus.Scheduled },
@@ -32,10 +32,8 @@ public class WalkControllerTest
         };
         _walkServiceMock.Setup(s => s.GetWalksAsync()).ReturnsAsync(walks);
 
-        // Act
         var result = await _controller.GetWalks();
 
-        // Assert
         result.Should().BeOfType<OkObjectResult>()
             .Which.Value.Should().BeEquivalentTo(walks);
 
@@ -49,14 +47,11 @@ public class WalkControllerTest
     [Fact]
     public async Task GetWalkById_ShouldReturnOk_WhenWalkExists()
     {
-        // Arrange
         var walk = new WalkDto { Id = 1, StartTime = DateTime.Now, Duration = TimeSpan.FromMinutes(30), Status = WalkStatus.Scheduled };
         _walkServiceMock.Setup(s => s.GetWalkByIdAsync(1)).ReturnsAsync(walk);
 
-        // Act
         var result = await _controller.GetWalkById(1);
 
-        // Assert
         result.Should().BeOfType<OkObjectResult>()
             .Which.Value.Should().BeEquivalentTo(walk);
 
@@ -66,13 +61,10 @@ public class WalkControllerTest
     [Fact]
     public async Task GetWalkById_ShouldReturnNotFound_WhenWalkDoesNotExist()
     {
-        // Arrange
         _walkServiceMock.Setup(s => s.GetWalkByIdAsync(1)).ReturnsAsync((WalkDto?)null);
 
-        // Act
         var result = await _controller.GetWalkById(1);
 
-        // Assert
         result.Should().BeOfType<NotFoundResult>()
             .Which.StatusCode.Should().Be(StatusCodes.Status404NotFound);
 
@@ -86,7 +78,6 @@ public class WalkControllerTest
     [Fact]
     public async Task GetWalksByWalkerId_ShouldReturnOkWithWalks()
     {
-        // Arrange
         var walks = new List<WalkDto>
         {
             new() { Id = 1, StartTime = DateTime.Now, Duration = TimeSpan.FromMinutes(30), Status = WalkStatus.Scheduled },
@@ -94,10 +85,8 @@ public class WalkControllerTest
         };
         _walkServiceMock.Setup(s => s.GetWalksByWalkerIdAsync(1)).ReturnsAsync(walks);
 
-        // Act
         var result = await _controller.GetWalksByWalkerId(1);
 
-        // Assert
         result.Should().BeOfType<OkObjectResult>()
             .Which.Value.Should().BeEquivalentTo(walks);
 
@@ -107,13 +96,10 @@ public class WalkControllerTest
     [Fact]
     public async Task GetWalksByWalkerId_ShouldReturnNoContent_WhenNoWalks()
     {
-        // Arrange
         _walkServiceMock.Setup(s => s.GetWalksByWalkerIdAsync(1)).ReturnsAsync(new List<WalkDto>());
 
-        // Act
         var result = await _controller.GetWalksByWalkerId(1);
 
-        // Assert
         result.Should().BeOfType<NoContentResult>()
             .Which.StatusCode.Should().Be(StatusCodes.Status204NoContent);
 
@@ -127,7 +113,6 @@ public class WalkControllerTest
     [Fact]
     public async Task GetWalksByOwnerId_ShouldReturnOkWithWalks()
     {
-        // Arrange
         var walks = new List<WalkDto>
         {
             new() { Id = 1, StartTime = DateTime.Now, Duration = TimeSpan.FromMinutes(30), Status = WalkStatus.Scheduled },
@@ -135,10 +120,8 @@ public class WalkControllerTest
         };
         _walkServiceMock.Setup(s => s.GetWalksByOwnerIdAsync(1)).ReturnsAsync(walks);
 
-        // Act
         var result = await _controller.GetWalksByOwnerId(1);
 
-        // Assert
         result.Should().BeOfType<OkObjectResult>()
             .Which.Value.Should().BeEquivalentTo(walks);
 
@@ -148,13 +131,10 @@ public class WalkControllerTest
     [Fact]
     public async Task GetWalksByOwnerId_ShouldReturnNoContent_WhenNoWalks()
     {
-        // Arrange
         _walkServiceMock.Setup(s => s.GetWalksByOwnerIdAsync(1)).ReturnsAsync(new List<WalkDto>());
 
-        // Act
         var result = await _controller.GetWalksByOwnerId(1);
 
-        // Assert
         result.Should().BeOfType<NoContentResult>()
             .Which.StatusCode.Should().Be(StatusCodes.Status204NoContent);
 
@@ -168,7 +148,6 @@ public class WalkControllerTest
     [Fact]
     public async Task ScheduleWalk_ShouldReturnCreatedWalkDto()
     {
-        // Arrange
         var walkDto = new WalkCreateDto
         {
             StartTime = DateTime.UtcNow.AddDays(1),
@@ -189,10 +168,8 @@ public class WalkControllerTest
             .Setup(s => s.ScheduleWalkAsync(It.IsAny<Walk>()))
             .ReturnsAsync(scheduledWalkDto);
 
-        // Act
         var result = await _controller.ScheduleWalk(walkDto);
 
-        // Assert
         result.Should().BeOfType<CreatedAtActionResult>()
             .Which.Value.Should().BeEquivalentTo(scheduledWalkDto);
 
@@ -207,42 +184,31 @@ public class WalkControllerTest
 
     #endregion
 
-    #region CompleteWalk
-
-    [Fact]
-    public async Task CompleteWalk_ShouldReturnNoContent_WhenWalkCompleted()
-    {
-        // Arrange
-        _walkServiceMock.Setup(s => s.CompleteWalkAsync(1)).Returns(Task.CompletedTask);
-
-        // Act
-        var result = await _controller.CompleteWalk(1);
-
-        // Assert
-        result.Should().BeOfType<NoContentResult>()
-            .Which.StatusCode.Should().Be(StatusCodes.Status204NoContent);
-
-        _walkServiceMock.Verify(s => s.CompleteWalkAsync(1), Times.Once);
-    }
-
-    #endregion
-
     #region CancelWalk
 
     [Fact]
     public async Task CancelWalk_ShouldReturnNoContent_WhenCanceled()
     {
-        // Arrange
-        _walkServiceMock.Setup(s => s.CancelWalkAsync(1)).Returns(Task.CompletedTask);
+        _walkServiceMock.Setup(s => s.CancelWalkByOwnerAsync(1, 123)).Returns(Task.CompletedTask);
 
-        // Act
+        // Mock User claims
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
+        _controller.ControllerContext.HttpContext.User = new System.Security.Claims.ClaimsPrincipal(
+            new System.Security.Claims.ClaimsIdentity(new[]
+            {
+                new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier, "123")
+            }, "TestAuth")
+        );
+
         var result = await _controller.CancelWalk(1);
 
-        // Assert
         result.Should().BeOfType<NoContentResult>()
             .Which.StatusCode.Should().Be(StatusCodes.Status204NoContent);
 
-        _walkServiceMock.Verify(s => s.CancelWalkAsync(1), Times.Once);
+        _walkServiceMock.Verify(s => s.CancelWalkByOwnerAsync(1, 123), Times.Once);
     }
 
     #endregion

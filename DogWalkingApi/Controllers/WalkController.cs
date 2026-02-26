@@ -1,15 +1,26 @@
 ﻿using DogWalkingApi.DTOs;
 using DogWalkingApi.Models;
 using DogWalkingApi.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace DogWalkingApi.Controllers;
 
 [ApiController]
 [Route("walks")]
+[Authorize]
 public class WalkController(IWalkService walkService) : ControllerBase
 {
     private readonly IWalkService _walkService = walkService;
+
+    private int? GetUserId()
+    {
+        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdStr)) return null;
+        if (!int.TryParse(userIdStr, out var userId)) return null;
+        return userId;
+    }
 
     [HttpGet]
     public async Task<IActionResult> GetWalks()
@@ -42,7 +53,6 @@ public class WalkController(IWalkService walkService) : ControllerBase
         return Ok(walks);
     }
 
-
     // Get all walks for an owner
     [HttpGet("owner/{ownerId}")]
     public async Task<IActionResult> GetWalksByOwnerId(int ownerId)
@@ -56,6 +66,7 @@ public class WalkController(IWalkService walkService) : ControllerBase
 
     // Schedule a new walk
     [HttpPost]
+    [Authorize(Roles = "Owner")]
     public async Task<IActionResult> ScheduleWalk([FromBody] WalkCreateDto walkDto)
     {
         var walk = new Walk
@@ -72,19 +83,14 @@ public class WalkController(IWalkService walkService) : ControllerBase
         return CreatedAtAction(nameof(GetWalkById), new { id = scheduled.Id }, scheduled);
     }
 
-    // Complete a walk
-    [HttpPut("{id}/complete")]
-    public async Task<IActionResult> CompleteWalk(int id)
-    {
-        await _walkService.CompleteWalkAsync(id);
-        return NoContent();
-    }
-
-    // Cancel a walk
     [HttpPut("{id}/cancel")]
     public async Task<IActionResult> CancelWalk(int id)
     {
-        await _walkService.CancelWalkAsync(id);
+        var ownerId = GetUserId();
+        if (ownerId == null) return Unauthorized();
+
+        await _walkService.CancelWalkByOwnerAsync(id, ownerId.Value);
+
         return NoContent();
     }
 }

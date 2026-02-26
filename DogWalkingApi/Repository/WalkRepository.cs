@@ -14,6 +14,13 @@ public class WalkRepository(ApplicationDbContext context) : IWalkRepository
         .Include(w => w.Walker).ToListAsync();
     }
 
+    public async Task<List<Walk>> GetPendingWalksAsync()
+    {
+        return await _context.Walks
+        .Where(w => w.Status == WalkStatus.Pending)
+        .ToListAsync();
+    }
+
     public async Task<Walk?> GetWalkByIdAsync(int id)
     {
         return await _context.Walks.Include(w => w.Dog)

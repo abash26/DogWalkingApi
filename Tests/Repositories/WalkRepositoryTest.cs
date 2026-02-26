@@ -37,7 +37,7 @@ public class WalkRepositoryTest : IDisposable
     [Fact]
     public async Task GetWalksAsync_ReturnsAllWalks_WithDogAndWalker()
     {
-        await TestHelpers.AddTestWalk(_context, ownerId: 10);
+        await TestHelpers.AddTestWalk(_context, ownerId: 10, walkerId: 5);
 
         var walks = await _repository.GetWalksAsync();
 
@@ -49,7 +49,7 @@ public class WalkRepositoryTest : IDisposable
     [Fact]
     public async Task GetWalkByIdAsync_ReturnsWalkWithDogAndWalker()
     {
-        var walk = await TestHelpers.AddTestWalk(_context, ownerId: 10);
+        var walk = await TestHelpers.AddTestWalk(_context, ownerId: 10, walkerId: 5);
         var result = await _repository.GetWalkByIdAsync(walk.Id);
 
         result.Should().NotBeNull();
@@ -68,27 +68,32 @@ public class WalkRepositoryTest : IDisposable
     [Fact]
     public async Task GetWalksByWalkerIdAsync_ReturnsWalksForWalker()
     {
-        var walk1 = await TestHelpers.AddTestWalk(_context, ownerId: 10);
-        await TestHelpers.AddTestWalk(_context, ownerId: 20);
+        // Create owner and walkers
+        var owner = await TestHelpers.AddTestUser(_context, role: UserRole.Owner);
+        var walker5 = await TestHelpers.AddTestUser(_context, role: UserRole.Walker);
+        var walker6 = await TestHelpers.AddTestUser(_context, role: UserRole.Walker);
 
-        var walkerId = walk1.WalkerId;
+        // Add walks with correct IDs
+        var walk1 = await TestHelpers.AddTestWalk(_context, owner.Id, walker5.Id);
+        var walk2 = await TestHelpers.AddTestWalk(_context, owner.Id, walker6.Id);
 
-        var walks = await _repository.GetWalksByWalkerIdAsync(walkerId);
+        // Fetch walks for walker5
+        var walks = await _repository.GetWalksByWalkerIdAsync(walker5.Id);
 
         walks.Should().HaveCount(1);
-        walks[0].WalkerId.Should().Be(walkerId);
+        walks[0].WalkerId.Should().Be(walker5.Id);
     }
 
     [Fact]
     public async Task GetWalksByOwnerIdAsync_ReturnsOnlyWalksForOwner()
     {
-        await TestHelpers.AddTestWalk(_context, ownerId: 10);
-        await TestHelpers.AddTestWalk(_context, ownerId: 20);
+        await TestHelpers.AddTestWalk(_context, ownerId: 10, walkerId: 5);
+        await TestHelpers.AddTestWalk(_context, ownerId: 20, walkerId: 6);
 
         var walks = await _repository.GetWalksByOwnerIdAsync(10);
 
         walks.Should().HaveCount(1);
-        walks[0].Dog.OwnerId.Should().Be(10);
+        walks[0].OwnerId.Should().Be(10);
     }
 
     [Fact]
@@ -100,10 +105,13 @@ public class WalkRepositoryTest : IDisposable
         var walk = new Walk
         {
             DogId = dog.Id,
-            WalkerId = walker.Id,
+            OwnerId = dog.OwnerId,  // assign owner FK
+            WalkerId = walker.Id,   // assign walker FK
             StartTime = DateTime.UtcNow,
             Duration = TimeSpan.FromHours(1),
-            Status = WalkStatus.Scheduled
+            Status = WalkStatus.Scheduled,
+            Dog = dog,
+            Walker = walker
         };
 
         await _repository.AddAsync(walk);
@@ -111,13 +119,14 @@ public class WalkRepositoryTest : IDisposable
         var persisted = await _context.Walks.FindAsync(walk.Id);
         persisted.Should().NotBeNull();
         persisted.WalkerId.Should().Be(walker.Id);
+        persisted.OwnerId.Should().Be(dog.OwnerId);
         persisted.DogId.Should().Be(dog.Id);
     }
 
     [Fact]
     public async Task UpdateAsync_UpdatesWalk()
     {
-        var walk = await TestHelpers.AddTestWalk(_context, ownerId: 1);
+        var walk = await TestHelpers.AddTestWalk(_context, ownerId: 1, walkerId: 2);
 
         var newStartTime = DateTime.UtcNow.AddDays(1);
         var newDuration = TimeSpan.FromHours(2);

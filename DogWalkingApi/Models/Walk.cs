@@ -1,7 +1,9 @@
 ﻿namespace DogWalkingApi.Models;
 public enum WalkStatus
 {
+    Pending,
     Scheduled,
+    InProgress,
     Completed,
     Canceled
 }
@@ -15,7 +17,8 @@ public class Walk
 
     // Foreign Keys
     public int DogId { get; set; }
-    public int WalkerId { get; set; }
+    public int OwnerId { get; set; }
+    public int? WalkerId { get; set; }
 
     // Navigation properties
     public Dog? Dog { get; set; }
