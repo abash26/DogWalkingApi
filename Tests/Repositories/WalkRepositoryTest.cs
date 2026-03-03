@@ -109,7 +109,7 @@ public class WalkRepositoryTest : IDisposable
             WalkerId = walker.Id,   // assign walker FK
             StartTime = DateTime.UtcNow,
             Duration = TimeSpan.FromHours(1),
-            Status = WalkStatus.Scheduled,
+            Status = WalkStatus.Pending,
             Dog = dog,
             Walker = walker
         };

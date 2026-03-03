@@ -75,8 +75,8 @@ public class DogControllerTest
         var result = await _controller.GetDogs();
 
         // Assert
-        result.Should().BeOfType<NoContentResult>()
-            .Which.StatusCode.Should().Be(StatusCodes.Status204NoContent);
+        result.Should().BeOfType<OkObjectResult>()
+            .Which.Value.Should().BeEquivalentTo(new List<Dog>());
     }
 
     #endregion

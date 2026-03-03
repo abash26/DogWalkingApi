@@ -49,7 +49,7 @@ public class TestHelpers
     int walkerId,
     DateTime? startTime = null,
     TimeSpan? duration = null,
-    WalkStatus status = WalkStatus.Scheduled)
+    WalkStatus status = WalkStatus.Pending)
     {
         var dog = await AddTestDog(context, ownerId: ownerId);
 

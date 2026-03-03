@@ -22,8 +22,8 @@ public class WalkServiceTest
     {
         var walks = new List<Walk>
         {
-            new() { Id = 1, StartTime = DateTime.Now, Duration = TimeSpan.FromMinutes(30), Status = WalkStatus.Scheduled },
-            new() { Id = 2, StartTime = DateTime.Now.AddHours(1), Duration = TimeSpan.FromMinutes(45), Status = WalkStatus.Scheduled }
+            new() { Id = 1, StartTime = DateTime.Now, Duration = TimeSpan.FromMinutes(30), Status = WalkStatus.Pending },
+            new() { Id = 2, StartTime = DateTime.Now.AddHours(1), Duration = TimeSpan.FromMinutes(45), Status = WalkStatus.Pending }
         };
         _walkRepositoryMock.Setup(repo => repo.GetWalksAsync()).ReturnsAsync(walks);
 
@@ -35,12 +35,12 @@ public class WalkServiceTest
     [Fact]
     public async Task GetWalkByIdAsync_ShouldReturnWalk()
     {
-        var walk = new Walk { Id = 1, StartTime = DateTime.Now, Duration = TimeSpan.FromMinutes(30), Status = WalkStatus.Scheduled };
+        var walk = new Walk { Id = 1, StartTime = DateTime.Now, Duration = TimeSpan.FromMinutes(30), Status = WalkStatus.Pending };
         _walkRepositoryMock.Setup(repo => repo.GetWalkByIdAsync(1)).ReturnsAsync(walk);
 
         var result = await _service.GetWalkByIdAsync(1);
 
-        result!.Status.Should().Be(WalkStatus.Scheduled);
+        result!.Status.Should().Be(WalkStatus.Pending);
     }
 
     [Fact]
@@ -58,8 +58,8 @@ public class WalkServiceTest
     {
         var walks = new List<Walk>
         {
-            new() { Id = 1, StartTime = DateTime.Now, Duration = TimeSpan.FromMinutes(30), Status = WalkStatus.Scheduled, WalkerId = 1 },
-            new() { Id = 2, StartTime = DateTime.Now.AddHours(1), Duration = TimeSpan.FromMinutes(45), Status = WalkStatus.Scheduled, WalkerId = 1 }
+            new() { Id = 1, StartTime = DateTime.Now, Duration = TimeSpan.FromMinutes(30), Status = WalkStatus.Pending, WalkerId = 1 },
+            new() { Id = 2, StartTime = DateTime.Now.AddHours(1), Duration = TimeSpan.FromMinutes(45), Status = WalkStatus.Pending, WalkerId = 1 }
         };
         _walkRepositoryMock.Setup(repo => repo.GetWalksByWalkerIdAsync(1)).ReturnsAsync(walks);
 
@@ -83,8 +83,8 @@ public class WalkServiceTest
     {
         var walks = new List<Walk>
         {
-            new() { Id = 1, StartTime = DateTime.Now, Duration = TimeSpan.FromMinutes(30), Status = WalkStatus.Scheduled, OwnerId = 1 },
-            new() { Id = 2, StartTime = DateTime.Now.AddHours(1), Duration = TimeSpan.FromMinutes(45), Status = WalkStatus.Scheduled, OwnerId = 1 }
+            new() { Id = 1, StartTime = DateTime.Now, Duration = TimeSpan.FromMinutes(30), Status = WalkStatus.Pending, OwnerId = 1 },
+            new() { Id = 2, StartTime = DateTime.Now.AddHours(1), Duration = TimeSpan.FromMinutes(45), Status = WalkStatus.Pending, OwnerId = 1 }
         };
         _walkRepositoryMock.Setup(repo => repo.GetWalksByOwnerIdAsync(1)).ReturnsAsync(walks);
 
@@ -102,10 +102,9 @@ public class WalkServiceTest
 
         var result = await _service.ScheduleWalkAsync(walk);
 
-        result.Status.Should().Be(WalkStatus.Scheduled);
+        result.Status.Should().Be(WalkStatus.Pending);
     }
 
-    // ✅ CompleteWalkAsync tests
     [Fact]
     public async Task CompleteWalkAsync_ShouldCompleteWalk_WhenWalkerAndInProgress()
     {
@@ -125,7 +124,7 @@ public class WalkServiceTest
 
         Func<Task> act = async () => await _service.CompleteWalkAsync(1, 123);
 
-        await act.Should().ThrowAsync<Exception>().WithMessage("Walk not found");
+        await act.Should().ThrowAsync<KeyNotFoundException>().WithMessage("Walk not found");
     }
 
     [Fact]
@@ -136,42 +135,41 @@ public class WalkServiceTest
 
         Func<Task> act = async () => await _service.CompleteWalkAsync(1, 123);
 
-        await act.Should().ThrowAsync<Exception>().WithMessage("You are not assigned to this walk");
+        await act.Should().ThrowAsync<UnauthorizedAccessException>().WithMessage("You are not assigned to this walk");
     }
 
     [Fact]
     public async Task CompleteWalkAsync_ShouldThrow_WhenNotInProgress()
     {
-        var walk = new Walk { Id = 1, WalkerId = 123, Status = WalkStatus.Scheduled };
+        var walk = new Walk { Id = 1, WalkerId = 123, Status = WalkStatus.Accepted };
         _walkRepositoryMock.Setup(r => r.GetWalkByIdAsync(1)).ReturnsAsync(walk);
 
         Func<Task> act = async () => await _service.CompleteWalkAsync(1, 123);
 
-        await act.Should().ThrowAsync<Exception>().WithMessage("Walk is not in progress");
+        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("Cannot change walk status from Accepted to Completed");
     }
 
-    // ✅ Cancel tests
     [Fact]
     public async Task CancelWalkByWalkerAsync_ShouldCancelWalk()
     {
-        var walk = new Walk { Id = 1, WalkerId = 123, Status = WalkStatus.Scheduled };
+        var walk = new Walk { Id = 1, WalkerId = 123, Status = WalkStatus.Accepted };
         _walkRepositoryMock.Setup(r => r.GetWalkByIdAsync(1)).ReturnsAsync(walk);
         _walkRepositoryMock.Setup(r => r.UpdateAsync(It.IsAny<Walk>())).Returns(Task.CompletedTask);
 
         await _service.CancelWalkByWalkerAsync(1, 123);
 
-        walk.Status.Should().Be(WalkStatus.Canceled);
+        walk.Status.Should().Be(WalkStatus.Cancelled);
     }
 
     [Fact]
     public async Task CancelWalkByOwnerAsync_ShouldCancelWalk()
     {
-        var walk = new Walk { Id = 1, OwnerId = 456, Status = WalkStatus.Scheduled };
+        var walk = new Walk { Id = 1, OwnerId = 456, Status = WalkStatus.Accepted };
         _walkRepositoryMock.Setup(r => r.GetWalkByIdAsync(1)).ReturnsAsync(walk);
         _walkRepositoryMock.Setup(r => r.UpdateAsync(It.IsAny<Walk>())).Returns(Task.CompletedTask);
 
         await _service.CancelWalkByOwnerAsync(1, 456);
 
-        walk.Status.Should().Be(WalkStatus.Canceled);
+        walk.Status.Should().Be(WalkStatus.Cancelled);
     }
 }

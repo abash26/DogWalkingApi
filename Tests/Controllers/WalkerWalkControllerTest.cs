@@ -53,13 +53,16 @@ public class WalkerWalkControllerTest
     }
 
     [Fact]
-    public async Task GetAvailableWalks_ShouldReturnNoContent_WhenNoWalks()
+    public async Task GetAvailableWalks_ShouldReturnEmptyArray_WhenNoWalks()
     {
         _walkServiceMock.Setup(s => s.GetPendingWalksAsync()).ReturnsAsync(new List<WalkDto>());
 
         var result = await _controller.GetAvailableWalks();
 
-        result.Should().BeOfType<NoContentResult>();
+        result.Should().BeOfType<OkObjectResult>()
+            .Which.Value.Should().BeEquivalentTo(new List<WalkDto>());
+
+        _walkServiceMock.Verify(s => s.GetPendingWalksAsync(), Times.Once);
     }
 
     #endregion
@@ -85,13 +88,16 @@ public class WalkerWalkControllerTest
     }
 
     [Fact]
-    public async Task GetMyWalks_ShouldReturnNoContent_WhenNoWalks()
+    public async Task GetMyWalks_ShouldReturnEmptyArray_WhenNoWalks()
     {
         _walkServiceMock.Setup(s => s.GetWalksByWalkerIdAsync(123)).ReturnsAsync(new List<WalkDto>());
 
         var result = await _controller.GetMyWalks();
 
-        result.Should().BeOfType<NoContentResult>();
+        result.Should().BeOfType<OkObjectResult>()
+            .Which.Value.Should().BeEquivalentTo(new List<WalkDto>());
+
+        _walkServiceMock.Verify(s => s.GetWalksByWalkerIdAsync(123), Times.Once);
     }
 
     [Fact]

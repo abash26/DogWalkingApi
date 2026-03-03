@@ -29,11 +29,7 @@ public class WalkerWalkController : ControllerBase
     public async Task<IActionResult> GetAvailableWalks()
     {
         var walks = await _walkService.GetPendingWalksAsync();
-
-        if (walks == null || walks.Count == 0)
-            return NoContent();
-
-        return Ok(walks);
+        return Ok(walks ?? []);
     }
 
     [HttpGet("mine")]
@@ -43,11 +39,7 @@ public class WalkerWalkController : ControllerBase
         if (walkerId == null) return Unauthorized();
 
         var walks = await _walkService.GetWalksByWalkerIdAsync(walkerId.Value);
-
-        if (walks == null || walks.Count == 0)
-            return NoContent();
-
-        return Ok(walks);
+        return Ok(walks ?? []);
     }
 
     [HttpPut("{id}/accept")]
@@ -57,7 +49,6 @@ public class WalkerWalkController : ControllerBase
         if (walkerId == null) return Unauthorized();
 
         await _walkService.AcceptWalkAsync(id, walkerId.Value);
-
         return NoContent();
     }
 
@@ -68,7 +59,6 @@ public class WalkerWalkController : ControllerBase
         if (walkerId == null) return Unauthorized();
 
         await _walkService.StartWalkAsync(id, walkerId.Value);
-
         return NoContent();
     }
 
@@ -79,7 +69,6 @@ public class WalkerWalkController : ControllerBase
         if (walkerId == null) return Unauthorized();
 
         await _walkService.CompleteWalkAsync(id, walkerId.Value);
-
         return NoContent();
     }
 
@@ -90,7 +79,6 @@ public class WalkerWalkController : ControllerBase
         if (walkerId == null) return Unauthorized();
 
         await _walkService.CancelWalkByWalkerAsync(id, walkerId.Value);
-
         return NoContent();
     }
 }

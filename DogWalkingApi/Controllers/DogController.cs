@@ -34,8 +34,6 @@ public class DogController : ControllerBase
         if (userId == null) return Unauthorized();
 
         var dogs = await _dogService.GetDogsAsync(userId.Value);
-        if (dogs.Count == 0) return NoContent();
-
         return Ok(dogs);
     }
 

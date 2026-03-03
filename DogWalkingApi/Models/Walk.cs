@@ -2,10 +2,10 @@
 public enum WalkStatus
 {
     Pending,
-    Scheduled,
+    Accepted,
     InProgress,
     Completed,
-    Canceled
+    Cancelled
 }
 
 public class Walk

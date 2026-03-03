@@ -42,7 +42,6 @@ public class WalkController(IWalkService walkService) : ControllerBase
         return Ok(walk);
     }
 
-    // Get all walks for a walker
     [HttpGet("walker/{walkerId}")]
     public async Task<IActionResult> GetWalksByWalkerId(int walkerId)
     {
@@ -53,7 +52,6 @@ public class WalkController(IWalkService walkService) : ControllerBase
         return Ok(walks);
     }
 
-    // Get all walks for an owner
     [HttpGet("owner/{ownerId}")]
     public async Task<IActionResult> GetWalksByOwnerId(int ownerId)
     {
@@ -64,18 +62,20 @@ public class WalkController(IWalkService walkService) : ControllerBase
         return Ok(walks);
     }
 
-    // Schedule a new walk
     [HttpPost]
     [Authorize(Roles = "Owner")]
     public async Task<IActionResult> ScheduleWalk([FromBody] WalkCreateDto walkDto)
     {
+        var ownerId = GetUserId();
+        if (ownerId == null) return Unauthorized();
+
         var walk = new Walk
         {
             StartTime = walkDto.StartTime,
             Duration = walkDto.Duration,
             DogId = walkDto.DogId,
-            WalkerId = walkDto.WalkerId,
-            Status = WalkStatus.Scheduled
+            OwnerId = ownerId.Value,
+            Status = WalkStatus.Pending
         };
 
         var scheduled = await _walkService.ScheduleWalkAsync(walk);

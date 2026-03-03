@@ -27,8 +27,8 @@ public class WalkControllerTest
     {
         var walks = new List<WalkDto>
         {
-            new() { Id = 1, StartTime = DateTime.Now, Duration = TimeSpan.FromMinutes(30), Status = WalkStatus.Scheduled },
-            new() { Id = 2, StartTime = DateTime.Now.AddHours(1), Duration = TimeSpan.FromMinutes(45), Status = WalkStatus.Scheduled }
+            new() { Id = 1, StartTime = DateTime.Now, Duration = TimeSpan.FromMinutes(30), Status = WalkStatus.Pending },
+            new() { Id = 2, StartTime = DateTime.Now.AddHours(1), Duration = TimeSpan.FromMinutes(45), Status = WalkStatus.Pending }
         };
         _walkServiceMock.Setup(s => s.GetWalksAsync()).ReturnsAsync(walks);
 
@@ -47,7 +47,7 @@ public class WalkControllerTest
     [Fact]
     public async Task GetWalkById_ShouldReturnOk_WhenWalkExists()
     {
-        var walk = new WalkDto { Id = 1, StartTime = DateTime.Now, Duration = TimeSpan.FromMinutes(30), Status = WalkStatus.Scheduled };
+        var walk = new WalkDto { Id = 1, StartTime = DateTime.Now, Duration = TimeSpan.FromMinutes(30), Status = WalkStatus.Pending };
         _walkServiceMock.Setup(s => s.GetWalkByIdAsync(1)).ReturnsAsync(walk);
 
         var result = await _controller.GetWalkById(1);
@@ -80,8 +80,8 @@ public class WalkControllerTest
     {
         var walks = new List<WalkDto>
         {
-            new() { Id = 1, StartTime = DateTime.Now, Duration = TimeSpan.FromMinutes(30), Status = WalkStatus.Scheduled },
-            new() { Id = 2, StartTime = DateTime.Now.AddHours(1), Duration = TimeSpan.FromMinutes(45), Status = WalkStatus.Scheduled }
+            new() { Id = 1, StartTime = DateTime.Now, Duration = TimeSpan.FromMinutes(30), Status = WalkStatus.Pending },
+            new() { Id = 2, StartTime = DateTime.Now.AddHours(1), Duration = TimeSpan.FromMinutes(45), Status = WalkStatus.Pending }
         };
         _walkServiceMock.Setup(s => s.GetWalksByWalkerIdAsync(1)).ReturnsAsync(walks);
 
@@ -96,7 +96,7 @@ public class WalkControllerTest
     [Fact]
     public async Task GetWalksByWalkerId_ShouldReturnNoContent_WhenNoWalks()
     {
-        _walkServiceMock.Setup(s => s.GetWalksByWalkerIdAsync(1)).ReturnsAsync(new List<WalkDto>());
+        _walkServiceMock.Setup(s => s.GetWalksByWalkerIdAsync(1)).ReturnsAsync([]);
 
         var result = await _controller.GetWalksByWalkerId(1);
 
@@ -115,8 +115,8 @@ public class WalkControllerTest
     {
         var walks = new List<WalkDto>
         {
-            new() { Id = 1, StartTime = DateTime.Now, Duration = TimeSpan.FromMinutes(30), Status = WalkStatus.Scheduled },
-            new() { Id = 2, StartTime = DateTime.Now.AddHours(1), Duration = TimeSpan.FromMinutes(45), Status = WalkStatus.Scheduled }
+            new() { Id = 1, StartTime = DateTime.Now, Duration = TimeSpan.FromMinutes(30), Status = WalkStatus.Pending },
+            new() { Id = 2, StartTime = DateTime.Now.AddHours(1), Duration = TimeSpan.FromMinutes(45), Status = WalkStatus.Pending }
         };
         _walkServiceMock.Setup(s => s.GetWalksByOwnerIdAsync(1)).ReturnsAsync(walks);
 
@@ -131,7 +131,7 @@ public class WalkControllerTest
     [Fact]
     public async Task GetWalksByOwnerId_ShouldReturnNoContent_WhenNoWalks()
     {
-        _walkServiceMock.Setup(s => s.GetWalksByOwnerIdAsync(1)).ReturnsAsync(new List<WalkDto>());
+        _walkServiceMock.Setup(s => s.GetWalksByOwnerIdAsync(1)).ReturnsAsync([]);
 
         var result = await _controller.GetWalksByOwnerId(1);
 
@@ -161,24 +161,36 @@ public class WalkControllerTest
             Id = 42,
             StartTime = walkDto.StartTime,
             Duration = walkDto.Duration,
-            Status = WalkStatus.Scheduled
+            Status = WalkStatus.Pending
         };
 
         _walkServiceMock
             .Setup(s => s.ScheduleWalkAsync(It.IsAny<Walk>()))
             .ReturnsAsync(scheduledWalkDto);
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext
+            {
+                User = new System.Security.Claims.ClaimsPrincipal(
+                    new System.Security.Claims.ClaimsIdentity(
+                    [
+                        new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier, "123")
+                    ], "TestAuth")
+                )
+            }
+        };
 
         var result = await _controller.ScheduleWalk(walkDto);
 
         result.Should().BeOfType<CreatedAtActionResult>()
             .Which.Value.Should().BeEquivalentTo(scheduledWalkDto);
 
-        _walkServiceMock.Verify(s => s.ScheduleWalkAsync(It.Is<Walk>(
-            w => w.DogId == walkDto.DogId &&
-                 w.WalkerId == walkDto.WalkerId &&
-                 w.StartTime == walkDto.StartTime &&
-                 w.Duration == walkDto.Duration &&
-                 w.Status == WalkStatus.Scheduled
+        _walkServiceMock.Verify(s => s.ScheduleWalkAsync(It.Is<Walk>(w =>
+            w.DogId == walkDto.DogId &&
+            w.StartTime == walkDto.StartTime &&
+            w.Duration == walkDto.Duration &&
+            w.WalkerId == null &&
+            w.Status == WalkStatus.Pending
         )), Times.Once);
     }
 
