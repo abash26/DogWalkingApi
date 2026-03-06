@@ -28,7 +28,8 @@ public class UserRepository : IUserRepository
         {
             Email = user.Email,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(user.Password),
-            Name = user.Name
+            Name = user.Name,
+            Role = user.Role
         };
 
         _context.Users.Add(newUser);

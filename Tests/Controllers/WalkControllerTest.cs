@@ -58,19 +58,6 @@ public class WalkControllerTest
         _walkServiceMock.Verify(s => s.GetWalkByIdAsync(1), Times.Once);
     }
 
-    [Fact]
-    public async Task GetWalkById_ShouldReturnNotFound_WhenWalkDoesNotExist()
-    {
-        _walkServiceMock.Setup(s => s.GetWalkByIdAsync(1)).ReturnsAsync((WalkDto?)null);
-
-        var result = await _controller.GetWalkById(1);
-
-        result.Should().BeOfType<NotFoundResult>()
-            .Which.StatusCode.Should().Be(StatusCodes.Status404NotFound);
-
-        _walkServiceMock.Verify(s => s.GetWalkByIdAsync(1), Times.Once);
-    }
-
     #endregion
 
     #region GetWalksByWalkerId
@@ -93,19 +80,6 @@ public class WalkControllerTest
         _walkServiceMock.Verify(s => s.GetWalksByWalkerIdAsync(1), Times.Once);
     }
 
-    [Fact]
-    public async Task GetWalksByWalkerId_ShouldReturnNoContent_WhenNoWalks()
-    {
-        _walkServiceMock.Setup(s => s.GetWalksByWalkerIdAsync(1)).ReturnsAsync([]);
-
-        var result = await _controller.GetWalksByWalkerId(1);
-
-        result.Should().BeOfType<NoContentResult>()
-            .Which.StatusCode.Should().Be(StatusCodes.Status204NoContent);
-
-        _walkServiceMock.Verify(s => s.GetWalksByWalkerIdAsync(1), Times.Once);
-    }
-
     #endregion
 
     #region GetWalksByOwnerId
@@ -124,19 +98,6 @@ public class WalkControllerTest
 
         result.Should().BeOfType<OkObjectResult>()
             .Which.Value.Should().BeEquivalentTo(walks);
-
-        _walkServiceMock.Verify(s => s.GetWalksByOwnerIdAsync(1), Times.Once);
-    }
-
-    [Fact]
-    public async Task GetWalksByOwnerId_ShouldReturnNoContent_WhenNoWalks()
-    {
-        _walkServiceMock.Setup(s => s.GetWalksByOwnerIdAsync(1)).ReturnsAsync([]);
-
-        var result = await _controller.GetWalksByOwnerId(1);
-
-        result.Should().BeOfType<NoContentResult>()
-            .Which.StatusCode.Should().Be(StatusCodes.Status204NoContent);
 
         _walkServiceMock.Verify(s => s.GetWalksByOwnerIdAsync(1), Times.Once);
     }

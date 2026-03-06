@@ -6,7 +6,7 @@ using System.Security.Claims;
 namespace DogWalkingApi.Controllers;
 
 [ApiController]
-[Route("walks/walker")]
+[Route("walks")]
 [Authorize(Roles = "Walker")]
 public class WalkerWalkController : ControllerBase
 {

@@ -51,7 +51,8 @@ public class AuthController(IAuthService authService) : ControllerBase
         return Ok(new
         {
             user.Id,
-            user.Email
+            user.Email,
+            Role = user.Role.ToString()
         });
     }
 

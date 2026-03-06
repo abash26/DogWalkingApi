@@ -2,28 +2,19 @@
 using DogWalkingApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace DogWalkingApi.Controllers;
 
 [ApiController]
 [Route("dogs")]
 [Authorize]
-public class DogController : ControllerBase
+public class DogController : BaseController
 {
     private readonly IDogService _dogService;
 
     public DogController(IDogService dogService)
     {
         _dogService = dogService;
-    }
-
-    private int? GetUserId()
-    {
-        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userIdStr)) return null;
-        if (!int.TryParse(userIdStr, out var userId)) return null;
-        return userId;
     }
 
     [HttpGet]

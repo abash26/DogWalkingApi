@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using DogWalkingApi.Models;
+using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace DogWalkingApi.DTOs;
 
@@ -12,5 +14,7 @@ public class RegisterDTO
 
     [Required]
     public string Name { get; set; }
-    public string Role { get; set; } = "owner";
+
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public UserRole Role { get; set; } = UserRole.Owner;
 }

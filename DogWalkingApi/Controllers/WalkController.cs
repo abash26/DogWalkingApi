@@ -3,41 +3,28 @@ using DogWalkingApi.Models;
 using DogWalkingApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace DogWalkingApi.Controllers;
 
 [ApiController]
 [Route("walks")]
 [Authorize]
-public class WalkController(IWalkService walkService) : ControllerBase
+public class WalkController(IWalkService walkService) : BaseController
 {
     private readonly IWalkService _walkService = walkService;
-
-    private int? GetUserId()
-    {
-        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userIdStr)) return null;
-        if (!int.TryParse(userIdStr, out var userId)) return null;
-        return userId;
-    }
 
     [HttpGet]
     public async Task<IActionResult> GetWalks()
     {
         var walks = await _walkService.GetWalksAsync();
 
-        if (walks == null) return NoContent();
-
-        return Ok(walks);
+        return Ok(walks ?? []);
     }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetWalkById(int id)
     {
         var walk = await _walkService.GetWalkByIdAsync(id);
-
-        if (walk == null) return NotFound();
 
         return Ok(walk);
     }
@@ -47,19 +34,15 @@ public class WalkController(IWalkService walkService) : ControllerBase
     {
         var walks = await _walkService.GetWalksByWalkerIdAsync(walkerId);
 
-        if (walks == null || walks.Count == 0) return NoContent();
-
-        return Ok(walks);
+        return Ok(walks ?? []);
     }
 
-    [HttpGet("owner/{ownerId}")]
+    [HttpGet("mine")]
     public async Task<IActionResult> GetWalksByOwnerId(int ownerId)
     {
         var walks = await _walkService.GetWalksByOwnerIdAsync(ownerId);
 
-        if (walks == null || walks.Count == 0) return NoContent();
-
-        return Ok(walks);
+        return Ok(walks ?? []);
     }
 
     [HttpPost]
