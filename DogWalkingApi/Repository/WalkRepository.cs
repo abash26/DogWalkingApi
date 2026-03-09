@@ -55,4 +55,15 @@ public class WalkRepository(ApplicationDbContext context) : IWalkRepository
         _context.Walks.Update(walk);
         await _context.SaveChangesAsync();
     }
+
+    public async Task<bool> AcceptWalkAsync(int walkId, int walkerId)
+    {
+        var rows = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+        UPDATE Walks
+        SET WalkerId = {walkerId}, Status = {(int)WalkStatus.Accepted}
+        WHERE Id = {walkId} AND Status = {(int)WalkStatus.Pending}
+    ");
+
+        return rows > 0;
+    }
 }

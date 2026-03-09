@@ -1,28 +1,19 @@
 ﻿using DogWalkingApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace DogWalkingApi.Controllers;
 
 [ApiController]
-[Route("walks")]
+[Route("walks/walker")]
 [Authorize(Roles = "Walker")]
-public class WalkerWalkController : ControllerBase
+public class WalkerWalkController : BaseController
 {
     private readonly IWalkService _walkService;
 
     public WalkerWalkController(IWalkService walkService)
     {
         _walkService = walkService;
-    }
-
-    private int? GetUserId()
-    {
-        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userIdStr)) return null;
-        if (!int.TryParse(userIdStr, out var userId)) return null;
-        return userId;
     }
 
     [HttpGet("available")]
@@ -48,8 +39,15 @@ public class WalkerWalkController : ControllerBase
         var walkerId = GetUserId();
         if (walkerId == null) return Unauthorized();
 
-        await _walkService.AcceptWalkAsync(id, walkerId.Value);
-        return NoContent();
+        try
+        {
+            await _walkService.AcceptWalkAsync(id, walkerId.Value);
+            return NoContent();
+        }
+        catch (InvalidOperationException)
+        {
+            return Conflict("Walk already accepted.");
+        }
     }
 
     [HttpPut("{id}/start")]

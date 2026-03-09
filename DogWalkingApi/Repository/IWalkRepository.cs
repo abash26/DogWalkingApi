@@ -10,4 +10,5 @@ public interface IWalkRepository
     Task<List<Walk>> GetWalksByWalkerIdAsync(int walkerId);
     Task AddAsync(Walk walk);
     Task UpdateAsync(Walk walk);
+    Task<bool> AcceptWalkAsync(int walkId, int walkerId);
 }

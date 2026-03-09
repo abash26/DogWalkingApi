@@ -7,18 +7,15 @@ using Microsoft.AspNetCore.Mvc;
 namespace DogWalkingApi.Controllers;
 
 [ApiController]
-[Route("walks")]
-[Authorize]
-public class WalkController(IWalkService walkService) : BaseController
+[Route("walks/owner")]
+[Authorize(Roles = "Owner")]
+public class WalkController : BaseController
 {
-    private readonly IWalkService _walkService = walkService;
+    private readonly IWalkService _walkService;
 
-    [HttpGet]
-    public async Task<IActionResult> GetWalks()
+    public WalkController(IWalkService walkService)
     {
-        var walks = await _walkService.GetWalksAsync();
-
-        return Ok(walks ?? []);
+        _walkService = walkService;
     }
 
     [HttpGet("{id}")]
@@ -29,24 +26,33 @@ public class WalkController(IWalkService walkService) : BaseController
         return Ok(walk);
     }
 
-    [HttpGet("walker/{walkerId}")]
-    public async Task<IActionResult> GetWalksByWalkerId(int walkerId)
+    [HttpGet("{id}/status")]
+    public async Task<IActionResult> GetWalkStatus(int id)
     {
-        var walks = await _walkService.GetWalksByWalkerIdAsync(walkerId);
+        var walk = await _walkService.GetWalkByIdAsync(id);
 
-        return Ok(walks ?? []);
+        if (walk == null)
+            return NotFound();
+
+        return Ok(new
+        {
+            walk.Id,
+            Status = walk.Status.ToString()
+        });
     }
 
     [HttpGet("mine")]
-    public async Task<IActionResult> GetWalksByOwnerId(int ownerId)
+    public async Task<IActionResult> GetWalksByOwnerId()
     {
-        var walks = await _walkService.GetWalksByOwnerIdAsync(ownerId);
+        var ownerId = GetUserId();
+        if (ownerId == null) return Unauthorized();
+
+        var walks = await _walkService.GetWalksByOwnerIdAsync(ownerId.Value);
 
         return Ok(walks ?? []);
     }
 
     [HttpPost]
-    [Authorize(Roles = "Owner")]
     public async Task<IActionResult> ScheduleWalk([FromBody] WalkCreateDto walkDto)
     {
         var ownerId = GetUserId();

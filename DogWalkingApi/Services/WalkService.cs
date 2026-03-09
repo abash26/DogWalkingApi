@@ -97,10 +97,10 @@ public class WalkService(IWalkRepository walkRepository) : IWalkService
 
         EnsureTransitionAllowed(walk, WalkStatus.Accepted);
 
-        walk.WalkerId = walkerId;
-        walk.Status = WalkStatus.Accepted;
+        var success = await _walkRepository.AcceptWalkAsync(walkId, walkerId);
 
-        await _walkRepository.UpdateAsync(walk);
+        if (!success)
+            throw new InvalidOperationException("Walk already accepted.");
     }
 
     public async Task StartWalkAsync(int walkId, int walkerId)
