@@ -46,7 +46,7 @@ public class TestHelpers
     public static async Task<Walk> AddTestWalk(
     ApplicationDbContext context,
     int ownerId,
-    int walkerId,
+    int? walkerId = null,
     DateTime? startTime = null,
     TimeSpan? duration = null,
     WalkStatus status = WalkStatus.Pending)

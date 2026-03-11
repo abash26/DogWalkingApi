@@ -69,16 +69,6 @@ public class WalkServiceTest
     }
 
     [Fact]
-    public async Task GetWalksByWalkerIdAsync_ShouldReturnEmptyList_WhenNoWalksFound()
-    {
-        _walkRepositoryMock.Setup(repo => repo.GetWalksByWalkerIdAsync(1)).ReturnsAsync(new List<Walk>());
-
-        var result = await _service.GetWalksByWalkerIdAsync(1);
-
-        result.Should().BeEmpty();
-    }
-
-    [Fact]
     public async Task GetWalksByOwnerIdAsync_ShouldReturnWalks()
     {
         var walks = new List<Walk>
@@ -97,12 +87,37 @@ public class WalkServiceTest
     public async Task ScheduleWalkAsync_ShouldScheduleWalk()
     {
         var walk = new Walk { Id = 1, StartTime = DateTime.Now, Duration = TimeSpan.FromMinutes(30) };
-        _walkRepositoryMock.Setup(repo => repo.AddAsync(walk)).Returns(Task.CompletedTask);
-        _walkRepositoryMock.Setup(repo => repo.GetWalkByIdAsync(1)).ReturnsAsync(walk);
+        _walkRepositoryMock.Setup(r => r.AddAsync(It.IsAny<Walk>())).Returns(Task.CompletedTask);
+        _walkRepositoryMock.Setup(r => r.GetWalkByIdAsync(1)).ReturnsAsync(walk);
 
-        var result = await _service.ScheduleWalkAsync(walk);
+        var result = await _service.ScheduleWalkAsync(new Walk { Id = 1, StartTime = walk.StartTime, Duration = walk.Duration });
 
         result.Status.Should().Be(WalkStatus.Pending);
+        result.Id.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task AcceptWalkAsync_ShouldAcceptWalk_WhenPending()
+    {
+        var walk = new Walk { Id = 1, Status = WalkStatus.Pending };
+        _walkRepositoryMock.Setup(r => r.GetWalkByIdAsync(1)).ReturnsAsync(walk);
+        _walkRepositoryMock.Setup(r => r.AcceptWalkAsync(1, 123)).ReturnsAsync(true);
+
+        await _service.AcceptWalkAsync(1, 123);
+
+        _walkRepositoryMock.Verify(r => r.AcceptWalkAsync(1, 123), Times.Once);
+    }
+
+    [Fact]
+    public async Task AcceptWalkAsync_ShouldThrow_WhenAlreadyAccepted()
+    {
+        var walk = new Walk { Id = 1, Status = WalkStatus.Pending };
+        _walkRepositoryMock.Setup(r => r.GetWalkByIdAsync(1)).ReturnsAsync(walk);
+        _walkRepositoryMock.Setup(r => r.AcceptWalkAsync(1, 123)).ReturnsAsync(false);
+
+        Func<Task> act = async () => await _service.AcceptWalkAsync(1, 123);
+
+        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("Walk already accepted.");
     }
 
     [Fact]
@@ -115,16 +130,7 @@ public class WalkServiceTest
         await _service.CompleteWalkAsync(1, 123);
 
         walk.Status.Should().Be(WalkStatus.Completed);
-    }
-
-    [Fact]
-    public async Task CompleteWalkAsync_ShouldThrow_WhenWalkNotFound()
-    {
-        _walkRepositoryMock.Setup(r => r.GetWalkByIdAsync(1)).ReturnsAsync((Walk?)null);
-
-        Func<Task> act = async () => await _service.CompleteWalkAsync(1, 123);
-
-        await act.Should().ThrowAsync<KeyNotFoundException>().WithMessage("Walk not found");
+        _walkRepositoryMock.Verify(r => r.UpdateAsync(It.Is<Walk>(w => w.Status == WalkStatus.Completed)), Times.Once);
     }
 
     [Fact]

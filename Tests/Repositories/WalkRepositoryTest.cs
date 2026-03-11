@@ -97,6 +97,23 @@ public class WalkRepositoryTest : IDisposable
     }
 
     [Fact]
+    public async Task GetPendingWalksAsync_ReturnsOnlyPendingWalks()
+    {
+        var pendingWalk = await TestHelpers.AddTestWalk(_context, ownerId: 1, walkerId: null);
+        pendingWalk.Status = WalkStatus.Pending;
+
+        var acceptedWalk = await TestHelpers.AddTestWalk(_context, ownerId: 2, walkerId: 5);
+        acceptedWalk.Status = WalkStatus.Accepted;
+
+        await _context.SaveChangesAsync();
+
+        var result = await _repository.GetPendingWalksAsync();
+
+        result.Should().HaveCount(1);
+        result[0].Status.Should().Be(WalkStatus.Pending);
+    }
+
+    [Fact]
     public async Task AddAsync_PersistsWalk()
     {
         var dog = await TestHelpers.AddTestDog(_context, ownerId: 1);
@@ -142,5 +159,56 @@ public class WalkRepositoryTest : IDisposable
         updated!.StartTime.Should().Be(newStartTime);
         updated.Duration.Should().Be(newDuration);
         updated.Status.Should().Be(newStatus);
+    }
+
+    [Fact]
+    public async Task AcceptWalkAsync_WhenWalkIsPending_ShouldAssignWalkerAndUpdateStatus()
+    {
+        var dog = await TestHelpers.AddTestDog(_context, ownerId: 1);
+
+        var walk = new Walk
+        {
+            DogId = dog.Id,
+            OwnerId = dog.OwnerId,
+            StartTime = DateTime.UtcNow,
+            Duration = TimeSpan.FromMinutes(30),
+            Status = WalkStatus.Pending,
+            WalkerId = null
+        };
+
+        _context.Walks.Add(walk);
+        await _context.SaveChangesAsync();
+
+        var walker = await TestHelpers.AddTestUser(_context, UserRole.Walker);
+
+        var success = await _repository.AcceptWalkAsync(walk.Id, walker.Id);
+
+        success.Should().BeTrue();
+
+        // IMPORTANT: reload entity because raw SQL bypasses EF tracking
+        await _context.Entry(walk).ReloadAsync();
+
+        walk.WalkerId.Should().Be(walker.Id);
+        walk.Status.Should().Be(WalkStatus.Accepted);
+    }
+
+    [Fact]
+    public async Task AcceptWalkAsync_WhenWalkAlreadyAccepted_ShouldReturnFalse()
+    {
+        var walk = await TestHelpers.AddTestWalk(_context, ownerId: 1, walkerId: 2);
+        walk.Status = WalkStatus.Accepted;
+        await _context.SaveChangesAsync();
+
+        var success = await _repository.AcceptWalkAsync(walk.Id, 99);
+
+        success.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task AcceptWalkAsync_WhenWalkDoesNotExist_ShouldReturnFalse()
+    {
+        var success = await _repository.AcceptWalkAsync(999, 1);
+
+        success.Should().BeFalse();
     }
 }
