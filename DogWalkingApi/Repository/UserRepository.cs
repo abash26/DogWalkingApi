@@ -13,6 +13,11 @@ public class UserRepository : IUserRepository
     {
         _context = context;
     }
+    public async Task<List<User>> GetAllUsers()
+    {
+        return await _context.Users.ToListAsync();
+    }
+
     public async Task<User?> GetUserById(int id)
     {
         return await _context.Users.FirstOrDefaultAsync(d => d.Id == id);
@@ -35,5 +40,11 @@ public class UserRepository : IUserRepository
         _context.Users.Add(newUser);
         await _context.SaveChangesAsync();
         return newUser;
+    }
+
+    public async Task UpdateUserAsync(User user)
+    {
+        _context.Users.Update(user);
+        await _context.SaveChangesAsync();
     }
 }

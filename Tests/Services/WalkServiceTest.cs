@@ -178,4 +178,16 @@ public class WalkServiceTest
 
         walk.Status.Should().Be(WalkStatus.Cancelled);
     }
+
+    [Fact]
+    public async Task CancelWalk_ShouldCancelWalk()
+    {
+        var walk = new Walk { Id = 1, OwnerId = 456, Status = WalkStatus.Accepted };
+        _walkRepositoryMock.Setup(r => r.GetWalkByIdAsync(1)).ReturnsAsync(walk);
+        _walkRepositoryMock.Setup(r => r.UpdateAsync(It.IsAny<Walk>())).Returns(Task.CompletedTask);
+
+        await _service.CancelWalk(1);
+
+        walk.Status.Should().Be(WalkStatus.Cancelled);
+    }
 }

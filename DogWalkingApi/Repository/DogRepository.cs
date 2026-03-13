@@ -13,13 +13,11 @@ public class DogRepository : IDogRepository
         _context = context;
     }
 
-    // Get all dogs (optionally filtered by owner)
     public async Task<List<Dog>> GetDogs()
     {
         return await _context.Dogs.ToListAsync();
     }
 
-    // Get dogs for a specific owner
     public async Task<List<Dog>> GetDogsByOwnerId(int ownerId)
     {
         return await _context.Dogs
@@ -27,13 +25,11 @@ public class DogRepository : IDogRepository
             .ToListAsync();
     }
 
-    // Get single dog by ID
     public async Task<Dog?> GetDogById(int id)
     {
         return await _context.Dogs.FirstOrDefaultAsync(d => d.Id == id);
     }
 
-    // Add dog (ownerId must come from server, not client)
     public async Task<Dog> AddDog(Dog dog)
     {
         _context.Dogs.Add(dog);

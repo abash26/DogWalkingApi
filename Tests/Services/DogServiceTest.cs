@@ -19,6 +19,25 @@ public class DogServiceTest
     }
 
     [Fact]
+    public async Task GetAllDogsAsync_ShouldReturnDogs()
+    {
+        // Arrange
+        var ownerId = 1;
+        var dogs = new List<Dog>
+        {
+            new() { Id = 1, Name = "Buddy", Breed = "Golden Retriever", Age = 3, Size = "Large", OwnerId = ownerId },
+            new() { Id = 2, Name = "Max", Breed = "Labrador", Age = 5, Size = "Large", OwnerId = ownerId }
+        };
+        _dogRepositoryMock.Setup(r => r.GetDogs()).ReturnsAsync(dogs);
+
+        // Act
+        var result = await _service.GetAllDogsAsync();
+
+        // Assert
+        result.Should().BeEquivalentTo(dogs);
+    }
+
+    [Fact]
     public async Task GetDogsAsync_ShouldReturnDogsForOwner()
     {
         // Arrange

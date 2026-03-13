@@ -7,6 +7,7 @@ public interface IWalkService
     Task AcceptWalkAsync(int walkId, int walkerId);
     Task CancelWalkByWalkerAsync(int walkId, int walkerId);
     Task CancelWalkByOwnerAsync(int walkId, int ownerId);
+    Task CancelWalk(int walkId);
     Task CompleteWalkAsync(int walkId, int walkerId);
     Task<List<WalkDto>> GetPendingWalksAsync();
     Task<WalkDto?> GetWalkByIdAsync(int id);

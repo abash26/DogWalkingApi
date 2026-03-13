@@ -13,6 +13,11 @@ public class DogService : IDogService
         _dogRepository = dogRepository;
     }
 
+    public async Task<List<Dog>> GetAllDogsAsync()
+    {
+        return await _dogRepository.GetDogs();
+    }
+
     // Get all dogs for a specific owner
     public async Task<List<Dog>> GetDogsAsync(int ownerId)
     {

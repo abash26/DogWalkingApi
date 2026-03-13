@@ -37,6 +37,19 @@ public class UserRepositoryTest : IDisposable
     }
 
     [Fact]
+    public async Task GetAllUsers_ShouldReturnUsers()
+    {
+        await TestHelpers.AddTestUser(_context, UserRole.Owner, "test@test.com", "Test User");
+        await TestHelpers.AddTestUser(_context, UserRole.Owner, "test2@test.com", "Test User");
+
+        var result = await _repository.GetAllUsers();
+
+        result.Should().HaveCount(2);
+        result[0].Email.Should().Be("test@test.com");
+        result[1].Email.Should().Be("test2@test.com");
+    }
+
+    [Fact]
     public async Task GetUserById_ShouldReturnUser()
     {
         var user = await TestHelpers.AddTestUser(_context, UserRole.Owner, "test@test.com", "Test User");
@@ -97,5 +110,26 @@ public class UserRepositoryTest : IDisposable
         // Verify hash matches password
         BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash)
             .Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task UpdateUserAsync_ShouldUpdateUser()
+    {
+        var user = await TestHelpers.AddTestUser(
+            _context,
+            UserRole.Owner,
+            "update@test.com",
+            "Original Name"
+        );
+
+        user.Name = "Updated Name";
+        user.Role = UserRole.Walker;
+
+        await _repository.UpdateUserAsync(user);
+        var updatedUser = await _context.Users.FindAsync(user.Id);
+
+        updatedUser.Should().NotBeNull();
+        updatedUser!.Name.Should().Be("Updated Name");
+        updatedUser.Role.Should().Be(UserRole.Walker);
     }
 }

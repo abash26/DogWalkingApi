@@ -154,4 +154,14 @@ public class WalkService(IWalkRepository walkRepository) : IWalkService
 
         await _walkRepository.UpdateAsync(walk);
     }
+
+    public async Task CancelWalk(int walkId)
+    {
+        var walk = await _walkRepository.GetWalkByIdAsync(walkId)
+                   ?? throw new KeyNotFoundException("Walk not found");
+
+        walk.Status = WalkStatus.Cancelled;
+
+        await _walkRepository.UpdateAsync(walk);
+    }
 }

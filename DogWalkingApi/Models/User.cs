@@ -3,7 +3,8 @@
 public enum UserRole
 {
     Owner = 0,
-    Walker = 1
+    Walker = 1,
+    Admin = 2
 }
 
 public class User

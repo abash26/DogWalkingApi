@@ -8,5 +8,6 @@ public interface IDogService
     Task<bool> DeleteDogAsync(int id, int ownerId);
     Task<Dog?> GetDogByIdAsync(int id);
     Task<List<Dog>> GetDogsAsync(int ownerId);
+    Task<List<Dog>> GetAllDogsAsync();
     Task<Dog?> UpdateDogAsync(int id, UpdateDogDTO dto, int ownerId);
 }
