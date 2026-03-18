@@ -108,15 +108,24 @@ public class WalkControllerTest
             new() { Id = 2, Status = WalkStatus.Accepted }
         };
 
-        _walkServiceMock.Setup(s => s.GetWalksByOwnerIdAsync(123))
-            .ReturnsAsync(walks);
+        var pagedResult = new PagedResult<WalkDto>
+        {
+            Items = walks,
+            TotalCount = walks.Count,
+            Page = 1,
+            PageSize = 10
+        };
+
+        _walkServiceMock
+            .Setup(s => s.GetWalksByOwnerIdAsync(123, 1, 10))
+            .ReturnsAsync(pagedResult);
 
         var result = await _controller.GetWalksByOwnerId();
 
         result.Should().BeOfType<OkObjectResult>()
-            .Which.Value.Should().BeEquivalentTo(walks);
+            .Which.Value.Should().BeEquivalentTo(pagedResult);
 
-        _walkServiceMock.Verify(s => s.GetWalksByOwnerIdAsync(123), Times.Once);
+        _walkServiceMock.Verify(s => s.GetWalksByOwnerIdAsync(123, 1, 10), Times.Once);
     }
 
     #endregion

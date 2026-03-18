@@ -69,18 +69,54 @@ public class WalkServiceTest
     }
 
     [Fact]
-    public async Task GetWalksByOwnerIdAsync_ShouldReturnWalks()
+    public async Task GetWalksByOwnerIdAsync_ShouldReturnPagedWalks()
     {
-        var walks = new List<Walk>
-        {
-            new() { Id = 1, StartTime = DateTime.Now, Duration = TimeSpan.FromMinutes(30), Status = WalkStatus.Pending, OwnerId = 1 },
-            new() { Id = 2, StartTime = DateTime.Now.AddHours(1), Duration = TimeSpan.FromMinutes(45), Status = WalkStatus.Pending, OwnerId = 1 }
-        };
-        _walkRepositoryMock.Setup(repo => repo.GetWalksByOwnerIdAsync(1)).ReturnsAsync(walks);
+        // Arrange
+        int ownerId = 1;
+        int page = 1;
+        int pageSize = 10;
 
-        var result = await _service.GetWalksByOwnerIdAsync(1);
+        var walksFromRepo = new List<Walk>
+    {
+        new() {
+            Id = 1,
+            StartTime = DateTime.Now,
+            Duration = TimeSpan.FromMinutes(30),
+            Status = WalkStatus.Pending,
+            OwnerId = ownerId
+        },
+        new() {
+            Id = 2,
+            StartTime = DateTime.Now.AddHours(1),
+            Duration = TimeSpan.FromMinutes(45),
+            Status = WalkStatus.Accepted,
+            OwnerId = ownerId
+        }
+    };
 
-        result.Should().HaveCount(2);
+        int totalCount = 2;
+
+        _walkRepositoryMock
+            .Setup(repo => repo.GetWalksByOwnerIdAsync(ownerId, page, pageSize))
+            .ReturnsAsync((walksFromRepo, totalCount));
+
+        // Act
+        var result = await _service.GetWalksByOwnerIdAsync(ownerId, page, pageSize);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Items.Should().HaveCount(2);
+        result.TotalCount.Should().Be(totalCount);
+        result.Page.Should().Be(page);
+        result.PageSize.Should().Be(pageSize);
+
+        result.Items[0].Id.Should().Be(1);
+        result.Items[1].Status.Should().Be(WalkStatus.Accepted);
+
+        _walkRepositoryMock.Verify(
+            repo => repo.GetWalksByOwnerIdAsync(ownerId, page, pageSize),
+            Times.Once
+        );
     }
 
     [Fact]

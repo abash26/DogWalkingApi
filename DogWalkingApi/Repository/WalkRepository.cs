@@ -16,9 +16,12 @@ public class WalkRepository(ApplicationDbContext context) : IWalkRepository
 
     public async Task<List<Walk>> GetPendingWalksAsync()
     {
+        var now = DateTime.UtcNow;
         return await _context.Walks
-        .Where(w => w.Status == WalkStatus.Pending)
-        .ToListAsync();
+            .Include(w => w.Dog)
+            .Include(w => w.Walker)
+            .Where(w => w.Status == WalkStatus.Pending && w.StartTime > now)
+            .ToListAsync();
     }
 
     public async Task<Walk?> GetWalkByIdAsync(int id)
@@ -36,12 +39,23 @@ public class WalkRepository(ApplicationDbContext context) : IWalkRepository
                              .ToListAsync();
     }
 
-    public async Task<List<Walk>> GetWalksByOwnerIdAsync(int ownerId)
+    public async Task<(List<Walk> Items, int TotalCount)> GetWalksByOwnerIdAsync(
+    int ownerId, int page, int pageSize)
     {
-        return await _context.Walks.Include(w => w.Dog)
-                             .Include(w => w.Walker)
-                             .Where(w => w.Dog.OwnerId == ownerId)
-                             .ToListAsync();
+        var query = _context.Walks
+            .Include(w => w.Dog)
+            .Include(w => w.Walker)
+            .Where(w => w.Dog.OwnerId == ownerId);
+
+        var totalCount = await query.CountAsync();
+
+        var items = await query
+            .OrderByDescending(w => w.StartTime)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (items, totalCount);
     }
 
     public async Task AddAsync(Walk walk)

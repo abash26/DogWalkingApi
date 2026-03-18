@@ -71,10 +71,21 @@ public class WalkService(IWalkRepository walkRepository) : IWalkService
         return walk.Select(MapToDto).ToList();
     }
 
-    public async Task<List<WalkDto>> GetWalksByOwnerIdAsync(int ownerId)
+    public async Task<PagedResult<WalkDto>> GetWalksByOwnerIdAsync(
+    int ownerId, int page, int pageSize)
     {
-        var walk = await _walkRepository.GetWalksByOwnerIdAsync(ownerId);
-        return walk.Select(MapToDto).ToList();
+        pageSize = Math.Min(pageSize, 50); // safety limit
+
+        var (items, totalCount) =
+            await _walkRepository.GetWalksByOwnerIdAsync(ownerId, page, pageSize);
+
+        return new PagedResult<WalkDto>
+        {
+            Items = items.Select(MapToDto).ToList(),
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize
+        };
     }
 
     public async Task<WalkDto> ScheduleWalkAsync(Walk walk)

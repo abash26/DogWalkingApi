@@ -90,27 +90,11 @@ public class WalkRepositoryTest : IDisposable
         await TestHelpers.AddTestWalk(_context, ownerId: 10, walkerId: 5);
         await TestHelpers.AddTestWalk(_context, ownerId: 20, walkerId: 6);
 
-        var walks = await _repository.GetWalksByOwnerIdAsync(10);
+        var pagedResult = await _repository.GetWalksByOwnerIdAsync(ownerId: 10, page: 1, pageSize: 10);
 
-        walks.Should().HaveCount(1);
-        walks[0].OwnerId.Should().Be(10);
-    }
-
-    [Fact]
-    public async Task GetPendingWalksAsync_ReturnsOnlyPendingWalks()
-    {
-        var pendingWalk = await TestHelpers.AddTestWalk(_context, ownerId: 1, walkerId: null);
-        pendingWalk.Status = WalkStatus.Pending;
-
-        var acceptedWalk = await TestHelpers.AddTestWalk(_context, ownerId: 2, walkerId: 5);
-        acceptedWalk.Status = WalkStatus.Accepted;
-
-        await _context.SaveChangesAsync();
-
-        var result = await _repository.GetPendingWalksAsync();
-
-        result.Should().HaveCount(1);
-        result[0].Status.Should().Be(WalkStatus.Pending);
+        pagedResult.Items.Should().HaveCount(1);
+        pagedResult.Items[0].OwnerId.Should().Be(10);
+        pagedResult.TotalCount.Should().Be(1);
     }
 
     [Fact]

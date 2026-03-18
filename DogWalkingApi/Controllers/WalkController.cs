@@ -42,14 +42,17 @@ public class WalkController : BaseController
     }
 
     [HttpGet("mine")]
-    public async Task<IActionResult> GetWalksByOwnerId()
+    public async Task<IActionResult> GetWalksByOwnerId(
+    [FromQuery] int page = 1,
+    [FromQuery] int pageSize = 10)
     {
         var ownerId = GetUserId();
         if (ownerId == null) return Unauthorized();
 
-        var walks = await _walkService.GetWalksByOwnerIdAsync(ownerId.Value);
+        var result = await _walkService.GetWalksByOwnerIdAsync(
+            ownerId.Value, page, pageSize);
 
-        return Ok(walks ?? []);
+        return Ok(result);
     }
 
     [HttpPost]

@@ -12,7 +12,8 @@ public interface IWalkService
     Task<List<WalkDto>> GetPendingWalksAsync();
     Task<WalkDto?> GetWalkByIdAsync(int id);
     Task<List<WalkDto>> GetWalksAsync();
-    Task<List<WalkDto>> GetWalksByOwnerIdAsync(int ownerId);
+    Task<PagedResult<WalkDto>> GetWalksByOwnerIdAsync(
+    int ownerId, int page, int pageSize);
     Task<List<WalkDto>> GetWalksByWalkerIdAsync(int walkerId);
     Task<WalkDto> ScheduleWalkAsync(Walk walk);
     Task StartWalkAsync(int walkId, int walkerId);
