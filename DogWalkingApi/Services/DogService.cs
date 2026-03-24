@@ -19,9 +19,21 @@ public class DogService : IDogService
     }
 
     // Get all dogs for a specific owner
-    public async Task<List<Dog>> GetDogsAsync(int ownerId)
+    public async Task<PagedResult<Dog>> GetDogsAsync(int ownerId, int page, int pageSize)
     {
-        return await _dogRepository.GetDogsByOwnerId(ownerId);
+        if (page < 1) page = 1;
+        if (pageSize < 1) pageSize = 10;
+        if (pageSize > 50) pageSize = 50;
+
+        var (items, totalCount) = await _dogRepository.GetDogsByOwnerId(ownerId, page, pageSize);
+
+        return new PagedResult<Dog>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize
+        };
     }
 
     // Get dog by ID (any user can view)

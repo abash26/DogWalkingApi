@@ -48,35 +48,58 @@ public class DogControllerTest
         // Arrange
         var userId = 1;
         SetUser(userId);
+
         var dogs = new List<Dog>
         {
             new() { Id = 1, Name = "Rex", Age = 3, Size = "Medium", OwnerId = 1 },
-            new() { Id = 2, Name = "Bella", Age = 5, Size = "Small", OwnerId = 2 }
+            new() { Id = 2, Name = "Bella", Age = 5, Size = "Small", OwnerId = 1 }
         };
-        _dogServiceMock.Setup(s => s.GetDogsAsync(userId)).ReturnsAsync(dogs);
+
+        var pagedResult = new PagedResult<Dog>
+        {
+            Items = dogs,
+            TotalCount = 2,
+            Page = 1,
+            PageSize = 10
+        };
+
+        _dogServiceMock
+            .Setup(s => s.GetDogsAsync(userId, 1, 10))
+            .ReturnsAsync(pagedResult);
 
         // Act
-        var result = await _controller.GetDogs();
+        var result = await _controller.GetDogs(1, 10);
 
         // Assert
         result.Should().BeOfType<OkObjectResult>()
-            .Which.Value.Should().BeEquivalentTo(dogs);
+            .Which.Value.Should().BeEquivalentTo(pagedResult);
     }
 
     [Fact]
-    public async Task GetDogs_ShouldReturnNoContent_WhenNoDogsExist()
+    public async Task GetDogs_ShouldReturnOkWithEmptyList_WhenNoDogsExist()
     {
         // Arrange
         var userId = 1;
         SetUser(userId);
-        _dogServiceMock.Setup(s => s.GetDogsAsync(userId)).ReturnsAsync(new List<Dog>());
+
+        var pagedResult = new PagedResult<Dog>
+        {
+            Items = [],
+            TotalCount = 0,
+            Page = 1,
+            PageSize = 10
+        };
+
+        _dogServiceMock
+            .Setup(s => s.GetDogsAsync(userId, 1, 10))
+            .ReturnsAsync(pagedResult);
 
         // Act
-        var result = await _controller.GetDogs();
+        var result = await _controller.GetDogs(1, 10);
 
         // Assert
         result.Should().BeOfType<OkObjectResult>()
-            .Which.Value.Should().BeEquivalentTo(new List<Dog>());
+            .Which.Value.Should().BeEquivalentTo(pagedResult);
     }
 
     #endregion

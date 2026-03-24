@@ -18,11 +18,20 @@ public class DogRepository : IDogRepository
         return await _context.Dogs.ToListAsync();
     }
 
-    public async Task<List<Dog>> GetDogsByOwnerId(int ownerId)
+    public async Task<(List<Dog> Items, int TotalCount)> GetDogsByOwnerId(int ownerId, int page, int pageSize)
     {
-        return await _context.Dogs
-            .Where(d => d.OwnerId == ownerId)
+        var query = _context.Dogs
+       .Where(d => d.OwnerId == ownerId);
+
+        var totalCount = await query.CountAsync();
+
+        var items = await query
+            .OrderByDescending(d => d.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
+
+        return (items, totalCount);
     }
 
     public async Task<Dog?> GetDogById(int id)

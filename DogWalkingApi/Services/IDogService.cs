@@ -7,7 +7,7 @@ public interface IDogService
     Task<Dog> AddDogAsync(CreateDogDTO dto, int ownerId);
     Task<bool> DeleteDogAsync(int id, int ownerId);
     Task<Dog?> GetDogByIdAsync(int id);
-    Task<List<Dog>> GetDogsAsync(int ownerId);
+    Task<PagedResult<Dog>> GetDogsAsync(int ownerId, int page, int pageSize);
     Task<List<Dog>> GetAllDogsAsync();
     Task<Dog?> UpdateDogAsync(int id, UpdateDogDTO dto, int ownerId);
 }

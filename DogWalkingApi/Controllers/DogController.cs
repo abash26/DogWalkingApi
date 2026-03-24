@@ -19,13 +19,16 @@ public class DogController : BaseController
 
     [HttpGet]
     [Authorize(Roles = "Owner")]
-    public async Task<IActionResult> GetDogs()
+    public async Task<IActionResult> GetDogs(
+    [FromQuery] int page = 1,
+    [FromQuery] int pageSize = 10)
     {
         var userId = GetUserId();
         if (userId == null) return Unauthorized();
 
-        var dogs = await _dogService.GetDogsAsync(userId.Value);
-        return Ok(dogs);
+        var result = await _dogService.GetDogsAsync(userId.Value, page, pageSize);
+
+        return Ok(result);
     }
 
     [HttpGet("{id}")]

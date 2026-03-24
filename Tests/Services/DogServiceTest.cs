@@ -42,18 +42,28 @@ public class DogServiceTest
     {
         // Arrange
         var ownerId = 1;
+        var page = 1;
+        var pageSize = 10;
+
         var dogs = new List<Dog>
-        {
-            new() { Id = 1, Name = "Buddy", Breed = "Golden Retriever", Age = 3, Size = "Large", OwnerId = ownerId },
-            new() { Id = 2, Name = "Max", Breed = "Labrador", Age = 5, Size = "Large", OwnerId = ownerId }
-        };
-        _dogRepositoryMock.Setup(r => r.GetDogsByOwnerId(ownerId)).ReturnsAsync(dogs);
+    {
+        new() { Id = 1, Name = "Buddy", Breed = "Golden Retriever", Age = 3, Size = "Large", OwnerId = ownerId },
+        new() { Id = 2, Name = "Max", Breed = "Labrador", Age = 5, Size = "Large", OwnerId = ownerId }
+    };
+
+        _dogRepositoryMock
+            .Setup(r => r.GetDogsByOwnerId(ownerId, page, pageSize))
+            .ReturnsAsync((dogs, dogs.Count));
 
         // Act
-        var result = await _service.GetDogsAsync(ownerId);
+        var result = await _service.GetDogsAsync(ownerId, page, pageSize);
 
         // Assert
-        result.Should().BeEquivalentTo(dogs);
+        result.Should().NotBeNull();
+        result.Items.Should().BeEquivalentTo(dogs);
+        result.TotalCount.Should().Be(dogs.Count);
+        result.Page.Should().Be(page);
+        result.PageSize.Should().Be(pageSize);
     }
 
     [Fact]
