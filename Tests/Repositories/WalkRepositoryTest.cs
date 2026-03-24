@@ -74,14 +74,14 @@ public class WalkRepositoryTest : IDisposable
         var walker6 = await TestHelpers.AddTestUser(_context, role: UserRole.Walker);
 
         // Add walks with correct IDs
-        var walk1 = await TestHelpers.AddTestWalk(_context, owner.Id, walker5.Id);
-        var walk2 = await TestHelpers.AddTestWalk(_context, owner.Id, walker6.Id);
+        await TestHelpers.AddTestWalk(_context, owner.Id, walker5.Id);
+        await TestHelpers.AddTestWalk(_context, owner.Id, walker6.Id);
 
         // Fetch walks for walker5
-        var walks = await _repository.GetWalksByWalkerIdAsync(walker5.Id);
+        var walks = await _repository.GetWalksByWalkerIdAsync(walker5.Id, page: 1, pageSize: 10);
 
-        walks.Should().HaveCount(1);
-        walks[0].WalkerId.Should().Be(walker5.Id);
+        walks.Items.Should().HaveCount(1);
+        walks.Items[0].WalkerId.Should().Be(walker5.Id);
     }
 
     [Fact]

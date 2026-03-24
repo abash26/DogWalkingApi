@@ -37,32 +37,49 @@ public class WalkerWalkControllerTest
     [Fact]
     public async Task GetAvailableWalks_ShouldReturnOk_WhenWalksExist()
     {
-        var walks = new List<WalkDto>
+        var paged = new PagedResult<WalkDto>
         {
-            new() { Id = 1, Status = WalkStatus.Pending },
-            new() { Id = 2, Status = WalkStatus.Pending }
+            Items =
+            [
+                new() { Id = 1, Status = WalkStatus.Pending },
+                new() { Id = 2, Status = WalkStatus.Pending }
+            ],
+            TotalCount = 2,
+            Page = 1,
+            PageSize = 10
         };
-        _walkServiceMock.Setup(s => s.GetPendingWalksAsync()).ReturnsAsync(walks);
 
-        var result = await _controller.GetAvailableWalks();
+        _walkServiceMock
+            .Setup(s => s.GetPendingWalksAsync(1, 10))
+            .ReturnsAsync(paged);
+
+        var result = await _controller.GetAvailableWalks(1, 10);
 
         result.Should().BeOfType<OkObjectResult>()
-            .Which.Value.Should().BeEquivalentTo(walks);
+            .Which.Value.Should().BeEquivalentTo(paged);
 
-        _walkServiceMock.Verify(s => s.GetPendingWalksAsync(), Times.Once);
+        _walkServiceMock.Verify(s => s.GetPendingWalksAsync(1, 10), Times.Once);
     }
 
     [Fact]
-    public async Task GetAvailableWalks_ShouldReturnEmptyArray_WhenNoWalks()
+    public async Task GetAvailableWalks_ShouldReturnEmpty_WhenNoWalks()
     {
-        _walkServiceMock.Setup(s => s.GetPendingWalksAsync()).ReturnsAsync(new List<WalkDto>());
+        var paged = new PagedResult<WalkDto>
+        {
+            Items = [],
+            TotalCount = 0,
+            Page = 1,
+            PageSize = 10
+        };
 
-        var result = await _controller.GetAvailableWalks();
+        _walkServiceMock
+            .Setup(s => s.GetPendingWalksAsync(1, 10))
+            .ReturnsAsync(paged);
+
+        var result = await _controller.GetAvailableWalks(1, 10);
 
         result.Should().BeOfType<OkObjectResult>()
-            .Which.Value.Should().BeEquivalentTo(new List<WalkDto>());
-
-        _walkServiceMock.Verify(s => s.GetPendingWalksAsync(), Times.Once);
+            .Which.Value.Should().BeEquivalentTo(paged);
     }
 
     #endregion
@@ -72,32 +89,49 @@ public class WalkerWalkControllerTest
     [Fact]
     public async Task GetMyWalks_ShouldReturnOk_WhenWalksExist()
     {
-        var walks = new List<WalkDto>
+        var paged = new PagedResult<WalkDto>
+        {
+            Items = new List<WalkDto>
         {
             new() { Id = 1 },
             new() { Id = 2 }
+        },
+            TotalCount = 2,
+            Page = 1,
+            PageSize = 10
         };
-        _walkServiceMock.Setup(s => s.GetWalksByWalkerIdAsync(123)).ReturnsAsync(walks);
 
-        var result = await _controller.GetMyWalks();
+        _walkServiceMock
+            .Setup(s => s.GetWalksByWalkerIdAsync(123, 1, 10))
+            .ReturnsAsync(paged);
+
+        var result = await _controller.GetMyWalks(1, 10);
 
         result.Should().BeOfType<OkObjectResult>()
-            .Which.Value.Should().BeEquivalentTo(walks);
+            .Which.Value.Should().BeEquivalentTo(paged);
 
-        _walkServiceMock.Verify(s => s.GetWalksByWalkerIdAsync(123), Times.Once);
+        _walkServiceMock.Verify(s => s.GetWalksByWalkerIdAsync(123, 1, 10), Times.Once);
     }
 
     [Fact]
-    public async Task GetMyWalks_ShouldReturnEmptyArray_WhenNoWalks()
+    public async Task GetMyWalks_ShouldReturnEmpty_WhenNoWalks()
     {
-        _walkServiceMock.Setup(s => s.GetWalksByWalkerIdAsync(123)).ReturnsAsync(new List<WalkDto>());
+        var paged = new PagedResult<WalkDto>
+        {
+            Items = new List<WalkDto>(),
+            TotalCount = 0,
+            Page = 1,
+            PageSize = 10
+        };
 
-        var result = await _controller.GetMyWalks();
+        _walkServiceMock
+            .Setup(s => s.GetWalksByWalkerIdAsync(123, 1, 10))
+            .ReturnsAsync(paged);
+
+        var result = await _controller.GetMyWalks(1, 10);
 
         result.Should().BeOfType<OkObjectResult>()
-            .Which.Value.Should().BeEquivalentTo(new List<WalkDto>());
-
-        _walkServiceMock.Verify(s => s.GetWalksByWalkerIdAsync(123), Times.Once);
+            .Which.Value.Should().BeEquivalentTo(paged);
     }
 
     [Fact]

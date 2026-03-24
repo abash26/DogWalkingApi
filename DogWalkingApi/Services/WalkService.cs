@@ -53,10 +53,21 @@ public class WalkService(IWalkRepository walkRepository) : IWalkService
         return walk.Select(MapToDto).ToList();
     }
 
-    public async Task<List<WalkDto>> GetPendingWalksAsync()
+    public async Task<PagedResult<WalkDto>> GetPendingWalksAsync(int page, int pageSize)
     {
-        var walk = await _walkRepository.GetPendingWalksAsync();
-        return walk.Select(MapToDto).ToList();
+        page = Math.Max(page, 1);
+        pageSize = Math.Min(pageSize, 50);
+
+        var (items, totalCount) =
+            await _walkRepository.GetPendingWalksAsync(page, pageSize);
+
+        return new PagedResult<WalkDto>
+        {
+            Items = items.Select(MapToDto).ToList(),
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize
+        };
     }
     public async Task<WalkDto?> GetWalkByIdAsync(int id)
     {
@@ -65,16 +76,27 @@ public class WalkService(IWalkRepository walkRepository) : IWalkService
         return MapToDto(walk);
     }
 
-    public async Task<List<WalkDto>> GetWalksByWalkerIdAsync(int walkerId)
+    public async Task<PagedResult<WalkDto>> GetWalksByWalkerIdAsync(int walkerId, int page, int pageSize)
     {
-        var walk = await _walkRepository.GetWalksByWalkerIdAsync(walkerId);
-        return walk.Select(MapToDto).ToList();
+        page = Math.Max(page, 1);
+        pageSize = Math.Min(pageSize, 50);
+
+        var (items, totalCount) =
+            await _walkRepository.GetWalksByWalkerIdAsync(walkerId, page, pageSize);
+
+        return new PagedResult<WalkDto>
+        {
+            Items = items.Select(MapToDto).ToList(),
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize
+        };
     }
 
     public async Task<PagedResult<WalkDto>> GetWalksByOwnerIdAsync(
     int ownerId, int page, int pageSize)
     {
-        pageSize = Math.Min(pageSize, 50); // safety limit
+        pageSize = Math.Min(pageSize, 50);
 
         var (items, totalCount) =
             await _walkRepository.GetWalksByOwnerIdAsync(ownerId, page, pageSize);

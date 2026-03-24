@@ -17,20 +17,25 @@ public class WalkerWalkController : BaseController
     }
 
     [HttpGet("available")]
-    public async Task<IActionResult> GetAvailableWalks()
+    public async Task<IActionResult> GetAvailableWalks(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10)
     {
-        var walks = await _walkService.GetPendingWalksAsync();
-        return Ok(walks ?? []);
+        var walks = await _walkService.GetPendingWalksAsync(page, pageSize);
+        return Ok(walks);
     }
 
     [HttpGet("mine")]
-    public async Task<IActionResult> GetMyWalks()
+    public async Task<IActionResult> GetMyWalks(
+    [FromQuery] int page = 1,
+    [FromQuery] int pageSize = 10
+    )
     {
         var walkerId = GetUserId();
         if (walkerId == null) return Unauthorized();
 
-        var walks = await _walkService.GetWalksByWalkerIdAsync(walkerId.Value);
-        return Ok(walks ?? []);
+        var walks = await _walkService.GetWalksByWalkerIdAsync(walkerId.Value, page, pageSize);
+        return Ok(walks);
     }
 
     [HttpPut("{id}/accept")]

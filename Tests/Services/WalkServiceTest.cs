@@ -22,8 +22,18 @@ public class WalkServiceTest
     {
         var walks = new List<Walk>
         {
-            new() { Id = 1, StartTime = DateTime.Now, Duration = TimeSpan.FromMinutes(30), Status = WalkStatus.Pending },
-            new() { Id = 2, StartTime = DateTime.Now.AddHours(1), Duration = TimeSpan.FromMinutes(45), Status = WalkStatus.Pending }
+            new() {
+                Id = 1,
+                StartTime = DateTime.Now,
+                Duration = TimeSpan.FromMinutes(30),
+                Status = WalkStatus.Pending
+            },
+            new() {
+                Id = 2,
+                StartTime = DateTime.Now.AddHours(1),
+                Duration = TimeSpan.FromMinutes(45),
+                Status = WalkStatus.Pending
+            }
         };
         _walkRepositoryMock.Setup(repo => repo.GetWalksAsync()).ReturnsAsync(walks);
 
@@ -35,7 +45,13 @@ public class WalkServiceTest
     [Fact]
     public async Task GetWalkByIdAsync_ShouldReturnWalk()
     {
-        var walk = new Walk { Id = 1, StartTime = DateTime.Now, Duration = TimeSpan.FromMinutes(30), Status = WalkStatus.Pending };
+        var walk = new Walk
+        {
+            Id = 1,
+            StartTime = DateTime.Now,
+            Duration = TimeSpan.FromMinutes(30),
+            Status = WalkStatus.Pending
+        };
         _walkRepositoryMock.Setup(repo => repo.GetWalkByIdAsync(1)).ReturnsAsync(walk);
 
         var result = await _service.GetWalkByIdAsync(1);
@@ -56,16 +72,35 @@ public class WalkServiceTest
     [Fact]
     public async Task GetWalksByWalkerIdAsync_ShouldReturnWalks()
     {
+        int page = 1;
+        int pageSize = 10;
+        int totalCount = 2;
+
         var walks = new List<Walk>
         {
-            new() { Id = 1, StartTime = DateTime.Now, Duration = TimeSpan.FromMinutes(30), Status = WalkStatus.Pending, WalkerId = 1 },
-            new() { Id = 2, StartTime = DateTime.Now.AddHours(1), Duration = TimeSpan.FromMinutes(45), Status = WalkStatus.Pending, WalkerId = 1 }
+            new() {
+                Id = 1,
+                StartTime = DateTime.Now,
+                Duration = TimeSpan.FromMinutes(30),
+                Status = WalkStatus.Pending,
+                WalkerId = 1
+            },
+            new() {
+                Id = 2,
+                StartTime = DateTime.Now.AddHours(1),
+                Duration = TimeSpan.FromMinutes(45),
+                Status = WalkStatus.Pending,
+                WalkerId = 1
+            }
         };
-        _walkRepositoryMock.Setup(repo => repo.GetWalksByWalkerIdAsync(1)).ReturnsAsync(walks);
 
-        var result = await _service.GetWalksByWalkerIdAsync(1);
+        _walkRepositoryMock
+            .Setup(repo => repo.GetWalksByWalkerIdAsync(1, page, pageSize))
+            .ReturnsAsync((walks, totalCount));
 
-        result.Should().HaveCount(2);
+        var result = await _service.GetWalksByWalkerIdAsync(1, page, pageSize);
+
+        result.Items.Should().HaveCount(2);
     }
 
     [Fact]
